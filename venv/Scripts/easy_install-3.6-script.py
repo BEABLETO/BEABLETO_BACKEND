@@ -1,4 +1,4 @@
-#!C:\Users\kimyo\Desktop\beableto\venv\Scripts\python.exe
+#!C:\Users\kimyo\Desktop\beab\venv\Scripts\python.exe
 # EASY-INSTALL-ENTRY-SCRIPT: 'setuptools==39.1.0','console_scripts','easy_install-3.6'
 __requires__ = 'setuptools==39.1.0'
 import re

@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'ta+@wr@hv-&r0q@jfx*$a1e8!@#t1gvx^0^yi7v2()+cgcpbst'
+SECRET_KEY = '5#o#l@mv6gx^d#s5*h#70!+4fga-laa7ku92=c06!*4+4h^4q='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,9 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
     'rest_framework',
-    'prac',
-     # 'oauth2_provider',
+    # 'oauth2_provider',
+    'rest_auth',
+    'rest_framework.authtoken',
+    'qtest',
 ]
 
 MIDDLEWARE = [
@@ -79,12 +82,11 @@ WSGI_APPLICATION = 'beableto.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # mysql 엔진 설정
-        'NAME': 'mysite',  # 데이터베이스 이름
+        'NAME': 'test_db',  # 데이터베이스 이름
         'USER': 'root',  # 데이터베이스 연결시 사용할 유저 이름
         'PASSWORD': 'kimyoungi99',  # 유저 패스워드
-        'HOST': 'localhost',
-        'PORT': ''
-}
+        'HOST': 'localhost', 'PORT': ''
+    }
 
 }
 
@@ -128,12 +130,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-# REST
+# SESSION_COOKIE_SECURE = False
+# CSRF_COOKIE_SECURE = False
+
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        # 'rest_framework.permissions.IsAdminUser',
-        # 'rest_framework.permissions.IsAuthenticated'
-        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'rest_framework.authentication.TokenAuthentication',
+        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # 디폴트 인증 클래스 추가
     ),
 }
+
+AUTH_USER_MODEL = "accounts.User"
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]

@@ -1,4 +1,4 @@
-#!C:\Users\kimyo\Desktop\beableto\venv\Scripts\python.exe
+#!C:\Users\kimyo\Desktop\beab\venv\Scripts\python.exe
 # EASY-INSTALL-ENTRY-SCRIPT: 'pip==10.0.1','console_scripts','pip'
 __requires__ = 'pip==10.0.1'
 import re
