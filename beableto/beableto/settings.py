@@ -14,7 +14,8 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'rest_auth',
     'rest_framework.authtoken',
     'qtest',
+    'information',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +84,7 @@ WSGI_APPLICATION = 'beableto.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # mysql 엔진 설정
-        'NAME': 'test_db',  # 데이터베이스 이름
+        'NAME': 'beableto',  # 데이터베이스 이름
         'USER': 'root',  # 데이터베이스 연결시 사용할 유저 이름
         'PASSWORD': 'kimyoungi99',  # 유저 패스워드
         'HOST': 'localhost', 'PORT': ''

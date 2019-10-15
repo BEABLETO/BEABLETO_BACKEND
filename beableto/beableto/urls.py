@@ -18,9 +18,16 @@ from django.urls import path, include
 from rest_framework import permissions
 from django.conf.urls import url
 
+from beableto import settings
+from django.views.static import serve
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('qtest/', include('qtest.urls')),
+    path('information/', include('information.urls')),
+    url(r'^media/(?P<path>.*)$', serve, { 'document_root': settings.MEDIA_ROOT, }),
 ]
+
+

@@ -13,7 +13,6 @@ class SignUpView(generics.CreateAPIView):
         return SignUpSerializer
 
 
-
 class AuthTokenAPIView(LoginView):
     def get_response_serializer(self):
         return AuthTokenSerializer

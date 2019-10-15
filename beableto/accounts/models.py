@@ -23,8 +23,8 @@ class User(AbstractUser, TimeStampedModel, DeleteModel):
     email = models.EmailField('이메일', unique=True)
     type = models.CharField('유형', max_length=10, default=TYPE_EMAIL)
     name = models.CharField('이름', max_length=20)
-    phone = models.CharField('전화번호', max_length=12, null=True)
-    guardian_phone = models.CharField('보호자 전화번호', max_length=12, null=True)
+    phone = models.CharField('전화번호', max_length=12, blank=True, null=True)
+    guardian_phone = models.CharField('보호자 전화번호', max_length=12, blank=True, null=True)
     aids = models.CharField('보조기구', max_length=20)
     push_agree = models.BooleanField('푸시알람동의')
 
