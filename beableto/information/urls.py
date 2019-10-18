@@ -5,4 +5,5 @@ from . import views
 
 urlpatterns = [
     path('save/', views.LocationSaveView.as_view(), name='LSV'),
+    path('getinfo/', views.LocationGetView.as_view(), name='LGV'),
 ]
