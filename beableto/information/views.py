@@ -6,7 +6,7 @@ from information.models import Location
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.forms.models import model_to_dict
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core import serializers
 from django.http import QueryDict
 from accounts.models import User
@@ -35,10 +35,84 @@ class LocationGetView(APIView):
 
     def get(self, request):  # Image, Comment 빼고는 묶는 작업 필요.
         rq_data = dict(request.data)
-        print(rq_data)
-        infos = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
-        info_list = serializers.serialize('json', infos)
-        return HttpResponse(info_list)
+        info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
+
+        isFirst = True
+        slope_mean = 0.0
+        data_size = 0
+        auto_door = 0
+        elevator = 0
+        toilet = 0
+        comment = []
+        location_name = ""
+        location_address = ""
+
+        for obj in info:
+            obj_dict = obj.as_dict()
+            data_size += 1
+            if isFirst:
+                isFirst = False
+                location_name = obj_dict['location_name']
+                location_address = obj_dict['location_address']
+                image_field = obj_dict['image']
+            slope_mean += obj_dict['slope']
+            if obj_dict['auto_door']:
+                auto_door += 1
+            if obj_dict['elevator']:
+                elevator += 1
+            if obj_dict['toilet']:
+                toilet += 1
+            comment.append(obj_dict['comment'])
+
+        slope_mean /= data_size  # mean 계산
+        if auto_door >= int(data_size) / 2:
+            auto_door_return = True
+        else:
+            auto_door_return = False
+
+        if elevator >= int(data_size) / 2:
+            elevator_return = True
+        else:
+            elevator_return = False
+
+        if toilet >= int(data_size) / 2:
+            toilet_return = True
+        else:
+            toilet_return = False
+
+        res_dict = {
+            'image': str(image_field),
+            'location_name': location_name,
+            'location_address ': location_address,
+            'x_axis': float(rq_data['x_axis'][0]),
+            'y_axis': float(rq_data['y_axis'][0]),
+            'slope': slope_mean,
+            'auto_door': auto_door_return,
+            'elevator': elevator_return,
+            'toilet': toilet_return,
+            'comment': comment,
+             }
+
+        return JsonResponse(res_dict)
+
+
+class LocationGetMarkers(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        rq_data = dict(request.data)
+        # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
+        info = Location.objects.filter(x_axis__range=(float(rq_data['lsx'][0]), float(rq_data['rnx'][0])), y_axis__range=(float(rq_data['lsy'][0]), float(rq_data['rny'][0]))).values('location_name', 'x_axis', 'y_axis')
+        # info_list = serializers.serialize('json', info)
+        ret_list = []
+        for d in info:
+            # j = json.dumps(d)
+            # j = j[1:-1]
+            ret_list.append(d)
+        markers = dict()
+        markers['markers'] = ret_list
+        return JsonResponse(markers)
+
 
 
 

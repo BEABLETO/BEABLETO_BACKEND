@@ -19,3 +19,18 @@ class Location(models.Model):
     # Optional
     image = models.ImageField(upload_to='locationImage/', blank=True, null=True)
     comment = models.CharField(max_length=200)
+
+    def as_dict(self):
+        return {
+            "user": self.user,
+            "location_name": self.location_name,
+            "location_address": self.location_address,
+            "x_axis": self.x_axis,
+            "y_axis": self.y_axis,
+            "slope": self.slope,
+            "auto_door": self.auto_door,
+            "elevator": self.elevator,
+            "toilet": self.toilet,
+            "image": self.image,
+            "comment": self.comment,
+        }
