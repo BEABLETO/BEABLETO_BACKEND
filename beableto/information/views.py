@@ -33,11 +33,12 @@ class LocationSaveView(generics.ListCreateAPIView):
 class LocationGetView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request):  # Image, Comment 빼고는 묶는 작업 필요.
+    def post(self, request):  # Image, Comment 빼고는 묶는 작업 필요.
         rq_data = dict(request.data)
         info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
 
         isFirst = True
+        isImage = True
         slope_mean = 0.0
         data_size = 0
         auto_door = 0
@@ -46,6 +47,7 @@ class LocationGetView(APIView):
         comment = []
         location_name = ""
         location_address = ""
+        image_field = ""
 
         for obj in info:
             obj_dict = obj.as_dict()
@@ -54,7 +56,11 @@ class LocationGetView(APIView):
                 isFirst = False
                 location_name = obj_dict['location_name']
                 location_address = obj_dict['location_address']
-                image_field = obj_dict['image']
+            if isImage:
+                if obj_dict['image'] is not "":
+                    image_field = obj_dict['image']
+                    isImage = False
+
             slope_mean += obj_dict['slope']
             if obj_dict['auto_door']:
                 auto_door += 1
@@ -99,7 +105,7 @@ class LocationGetView(APIView):
 class LocationGetMarkers(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request):
+    def post(self, request):
         rq_data = dict(request.data)
         # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
         info = Location.objects.filter(x_axis__range=(float(rq_data['lsx'][0]), float(rq_data['rnx'][0])), y_axis__range=(float(rq_data['lsy'][0]), float(rq_data['rny'][0]))).values('location_name', 'x_axis', 'y_axis')
@@ -112,8 +118,6 @@ class LocationGetMarkers(APIView):
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)
-
-
 
 
 # class NearLocationView(APIView):
