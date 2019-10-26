@@ -13,6 +13,15 @@ from accounts.models import User
 import json
 
 
+def bracket_clear(string):
+    if string.startswith('\"'):
+        string = string[1:]
+    if string.endswith('\"'):
+        string = string[:-1]
+
+    return string
+
+
 class LocationSaveView(generics.ListCreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -35,7 +44,7 @@ class LocationGetView(APIView):
 
     def post(self, request):  # Image, Comment 빼고는 묶는 작업 필요.
         rq_data = dict(request.data)
-        info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
+        info = Location.objects.filter(x_axis=float(rq_data['x_axis']), y_axis=float(rq_data['y_axis']))
 
         isFirst = True
         isImage = True
@@ -68,7 +77,7 @@ class LocationGetView(APIView):
                 elevator += 1
             if obj_dict['toilet']:
                 toilet += 1
-            comment.append(obj_dict['comment'])
+            comment.append(bracket_clear(obj_dict['comment']))
 
         slope_mean /= data_size  # mean 계산
         if auto_door >= int(data_size) / 2:
@@ -85,6 +94,9 @@ class LocationGetView(APIView):
             toilet_return = True
         else:
             toilet_return = False
+
+        location_name = bracket_clear(location_name)
+        location_address = bracket_clear(location_address)
 
         res_dict = {
             'image': str(image_field),
@@ -108,7 +120,9 @@ class LocationGetMarkers(APIView):
     def post(self, request):
         rq_data = dict(request.data)
         # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
-        info = Location.objects.filter(x_axis__range=(float(rq_data['lsx'][0]), float(rq_data['rnx'][0])), y_axis__range=(float(rq_data['lsy'][0]), float(rq_data['rny'][0]))).values('location_name', 'x_axis', 'y_axis')
+        print(rq_data['lsx'])
+        print(rq_data['rnx'])
+        info = Location.objects.filter(x_axis__range=(float(rq_data['lsx']), float(rq_data['rnx'])), y_axis__range=(float(rq_data['lsy']), float(rq_data['rny']))).values('location_name', 'x_axis', 'y_axis')
         # info_list = serializers.serialize('json', info)
         ret_list = []
         for d in info:
@@ -118,6 +132,8 @@ class LocationGetMarkers(APIView):
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)
+
+
 
 
 # class NearLocationView(APIView):
