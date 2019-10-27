@@ -11,15 +11,8 @@ from django.core import serializers
 from django.http import QueryDict
 from accounts.models import User
 import json
-
-
-def bracket_clear(string):
-    if string.startswith('\"'):
-        string = string[1:]
-    if string.endswith('\"'):
-        string = string[:-1]
-
-    return string
+from .utilities import bracket_clear
+from .utilities import MarkerClass
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -28,9 +21,6 @@ class LocationSaveView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def create(self, request, *args, **kwargs):
-        # query_dict = QueryDict('', mutable=True)
-        # query_dict.update(request.data)
-        # query_dict.appendlist('user', request.user)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -48,7 +38,7 @@ class LocationGetView(APIView):
 
         isFirst = True
         isImage = True
-        slope_mean = 0.0
+        slope_mean = 0
         data_size = 0
         auto_door = 0
         elevator = 0
@@ -66,8 +56,8 @@ class LocationGetView(APIView):
                 location_name = obj_dict['location_name']
                 location_address = obj_dict['location_address']
             if isImage:
-                if obj_dict['image'] is not "":
-                    image_field = obj_dict['image']
+                if str(obj_dict['image']) is not "":
+                    image_field = str(obj_dict['image'])
                     isImage = False
 
             slope_mean += obj_dict['slope']
@@ -77,9 +67,10 @@ class LocationGetView(APIView):
                 elevator += 1
             if obj_dict['toilet']:
                 toilet += 1
-            comment.append(bracket_clear(obj_dict['comment']))
+            if bracket_clear(obj_dict['comment']) is not "":
+                comment.append(bracket_clear(obj_dict['comment']))
 
-        slope_mean /= data_size  # mean 계산
+        slope_mean = round(slope_mean / float(data_size))  # mean 계산
         if auto_door >= int(data_size) / 2:
             auto_door_return = True
         else:
@@ -102,8 +93,8 @@ class LocationGetView(APIView):
             'image': str(image_field),
             'location_name': location_name,
             'location_address ': location_address,
-            'x_axis': float(rq_data['x_axis'][0]),
-            'y_axis': float(rq_data['y_axis'][0]),
+            'x_axis': float(rq_data['x_axis']),
+            'y_axis': float(rq_data['y_axis']),
             'slope': slope_mean,
             'auto_door': auto_door_return,
             'elevator': elevator_return,
@@ -122,13 +113,32 @@ class LocationGetMarkers(APIView):
         # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
         print(rq_data['lsx'])
         print(rq_data['rnx'])
-        info = Location.objects.filter(x_axis__range=(float(rq_data['lsx']), float(rq_data['rnx'])), y_axis__range=(float(rq_data['lsy']), float(rq_data['rny']))).values('location_name', 'x_axis', 'y_axis')
-        # info_list = serializers.serialize('json', info)
+        info = Location.objects.filter(x_axis__range=(float(rq_data['lsx']), float(rq_data['rnx'])), y_axis__range=(float(rq_data['lsy']), float(rq_data['rny'])))
+
+        index = 0
+        marker_list = []
+        cord_dict = {}
+        marker_set = set()
+        for obj in info:
+            obj_dict = obj.as_dict()
+            obj_cord = (obj_dict['x_axis'], obj_dict['y_axis'])
+            if obj_cord in marker_set:
+                key = str(obj_cord[0]) + " " + str(obj_cord[1])
+                marker_index = cord_dict[key]
+                marker_list[marker_index].updataValue(obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'])
+            else:
+                marker_set.add(obj_cord)
+                key = str(obj_cord[0]) + " " + str(obj_cord[1])
+                cord_dict[key] = index
+                index += 1
+                newMarker = MarkerClass(obj_cord[0], obj_cord[1], obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'], obj_dict['location_name'])
+                marker_list.append(newMarker)
+
         ret_list = []
-        for d in info:
+        for m in marker_list:
             # j = json.dumps(d)
             # j = j[1:-1]
-            ret_list.append(d)
+            ret_list.append(m.getAsDict())
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)

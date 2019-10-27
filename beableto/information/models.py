@@ -34,3 +34,7 @@ class Location(models.Model):
             "image": self.image,
             "comment": self.comment,
         }
+
+
+
+
