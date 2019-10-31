@@ -18,7 +18,7 @@ class Location(models.Model):
 
     # Optional
     image = models.ImageField(upload_to='locationImage/', blank=True, null=True)
-    comment = models.CharField(max_length=200)
+    comment = models.CharField(max_length=200, blank=True, null=True)
 
     def as_dict(self):
         return {
