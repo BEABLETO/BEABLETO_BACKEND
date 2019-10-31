@@ -1,1 +1,1 @@
-Repo for 캡디
+Backend for BEABLETO project
