@@ -13,6 +13,7 @@ from accounts.models import User
 import json
 from .utilities import bracket_clear
 from .utilities import MarkerClass
+import json
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -21,7 +22,9 @@ class LocationSaveView(generics.ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        rq_data = dict(request.data)
+        rq_data['user'] = request.user.pk
+        serializer = self.get_serializer(data=rq_data)
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
@@ -67,8 +70,8 @@ class LocationGetView(APIView):
                 elevator += 1
             if obj_dict['toilet']:
                 toilet += 1
-            if bracket_clear(obj_dict['comment']) is not "":
-                comment.append(bracket_clear(obj_dict['comment']))
+            if str(obj_dict['comment']) is not "":
+                comment.append(bracket_clear(str(obj_dict['comment'])))
 
         slope_mean = round(slope_mean / float(data_size))  # mean 계산
         if auto_door >= int(data_size) / 2:
@@ -90,6 +93,7 @@ class LocationGetView(APIView):
         location_address = bracket_clear(location_address)
 
         res_dict = {
+            'user': info[0].as_dict()['user'],
             'image': str(image_field),
             'location_name': location_name,
             'location_address ': location_address,

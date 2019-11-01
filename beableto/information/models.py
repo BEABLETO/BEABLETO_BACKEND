@@ -36,5 +36,3 @@ class Location(models.Model):
         }
 
 
-
-
