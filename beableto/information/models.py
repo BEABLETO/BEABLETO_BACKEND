@@ -36,3 +36,10 @@ class Location(models.Model):
         }
 
 
+class Bus(models.Model):
+    # 외래키
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+
+    area = models.CharField(max_length=30)
+    line = models.CharField(max_length=30)
+    height = models.IntegerField()

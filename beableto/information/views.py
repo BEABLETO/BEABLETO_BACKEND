@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer
-from information.models import Location
+from information.serializers import LocationSerializer, BusSerializer
+from information.models import Location, Bus
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.forms.models import model_to_dict
@@ -93,7 +93,6 @@ class LocationGetView(APIView):
         location_address = bracket_clear(location_address)
 
         res_dict = {
-            'user': info[0].as_dict()['user'],
             'image': str(image_field),
             'location_name': location_name,
             'location_address ': location_address,
@@ -147,6 +146,21 @@ class LocationGetMarkers(APIView):
         markers['markers'] = ret_list
         return JsonResponse(markers)
 
+
+class BusSaveView(generics.ListCreateAPIView):
+    queryset = Bus.objects.all()
+    serializer_class = BusSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        rq_data = dict(request.data)
+        rq_data['user'] = request.user.pk
+        serializer = self.get_serializer(data=rq_data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
 
 
 
