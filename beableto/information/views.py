@@ -163,6 +163,12 @@ class BusSaveView(generics.ListCreateAPIView):
         return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
 
 
+class GetPathsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+
 
 # class NearLocationView(APIView):
 #     permission_classes = (IsAuthenticated,)
