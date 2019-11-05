@@ -14,6 +14,7 @@ import json
 from .utilities import bracket_clear
 from .utilities import MarkerClass
 import json
+import requests
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -108,7 +109,7 @@ class LocationGetView(APIView):
         return JsonResponse(res_dict)
 
 
-class LocationGetMarkers(APIView):
+class LocationGetMarkersVIew(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -193,3 +194,49 @@ class RoadSaveView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
+
+
+# 사용자의 경로 구성을 돕기위한 정보 Return View
+class GetBaseWalkView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+        with open('tmap.txt') as f:
+            api_key = f.readline()
+            f.close
+        headers = {'Accept': "application/json",
+                   # 'Content-Type': "application/json; charset=UTF-8",
+                   'appKey': api_key,
+                   'Accept-Language': "ko",
+                   }
+        # 우리 (x, y)와 T-MAP(x, y) 순서 다름
+        body = {'startX': str(rq_data['start_y_axis']),
+                'startY': str(rq_data['start_x_axis']),
+                'endX': str(rq_data['end_y_axis']),
+                'endY': str(rq_data['end_x_axis']),
+                # 'reqCoordType': "WGS84GEO",
+                'startName': "안뇽",
+                'endName': "잘가",
+                }
+        print(body)
+        r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+
+        print(r)
+        while str(r) != "<Response [200]>":
+            print(r)
+            r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+        ret_data =[]
+        for element in r.json()['features']:
+            if element['geometry']['type'] == 'LineString':
+                # print(element['geometry']['coordinates'])
+                for point in element['geometry']['coordinates']:
+                    temp_point = {}
+                    temp_point['x_axis'] = point[1]
+                    temp_point['y_axis'] = point[0]
+                    if temp_point not in ret_data:
+                        ret_data.append(temp_point)
+        ret_dict = dict()
+        ret_dict['path'] = ret_data
+        print(ret_dict)
+        return JsonResponse(ret_dict)
