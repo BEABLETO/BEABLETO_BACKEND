@@ -5,16 +5,13 @@ from information.serializers import LocationSerializer, BusSerializer, RoadSeria
 from information.models import Location, Bus
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.forms.models import model_to_dict
 from django.http import HttpResponse, JsonResponse
-from django.core import serializers
-from django.http import QueryDict
-from accounts.models import User
-import json
+import googlemaps
 from .utilities import bracket_clear
 from .utilities import MarkerClass
 import json
 import requests
+import datetime
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -169,6 +166,67 @@ class GetPathsView(APIView):
 
     def post(self, request):
         rq_data = dict(request.data)
+        with open('tmap.txt') as f:
+            tmap_api_key = f.readline()
+            f.close
+        with open('googlemaps.txt') as f:
+            gmap_api_key = f.readline()
+            f.close
+        gmaps = googlemaps.Client(key=gmap_api_key)
+        dt = datetime.datetime.now()
+        di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True)
+        paths = dict()
+        path_list = []
+
+        path_index = 0
+        for google_path in di:
+            path_index += 1
+            path = dict()
+            sub_path_list = []
+            for sub_google_path in google_path['legs'][0]['steps']:
+                sub_path = dict()
+
+                # Front의 요청에 의한 포멧팅
+
+                # Walk 필드
+                sub_path['walk_start_x'] = None
+                sub_path['walk_start_y'] = None
+                sub_path['walk_end_x'] = None
+                sub_path['walk_end_y'] = None
+                sub_path['walk_seq'] = None
+
+                # Bus 필드
+                sub_path['bus_start_x'] = None
+                sub_path['bus_start_y'] = None
+                sub_path['bus_end_x'] = None
+                sub_path['bus_end_y'] = None
+                sub_path['bus_line'] = None
+                sub_path['bus_height'] = None
+
+                # Train 필드
+                sub_path['train_start_x'] = None
+                sub_path['train_start_y'] = None
+                sub_path['train_end_x'] = None
+                sub_path['train_end_y'] = None
+                sub_path['train_line'] = None
+
+                if str(sub_google_path['travel_mode']) == "TRANSIT":
+                    if "지하철" in sub_google_path['transit_details']['line']['name']:
+                        sub_path['type'] = "train"
+                    elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
+                        sub_path['type'] = "bus"
+                    else:
+                        # 나중에 다시 봐야됨
+                        continue
+                else:
+                    sub_path['type'] = "walk"
+
+                sub_path_list.append(sub_path)
+            path['path'] = sub_path_list
+            path_list.append(path)
+        paths['paths'] = path_list
+
+        return JsonResponse(paths)
 
 
 class RoadSaveView(generics.ListCreateAPIView):

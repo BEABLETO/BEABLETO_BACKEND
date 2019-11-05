@@ -9,6 +9,7 @@ urlpatterns = [
     path('getinfo/', views.LocationGetView.as_view(), name='LGV'),
     path('getmarker/', views.LocationGetMarkersVIew.as_view(), name="LGM"),
     path('getpath/', views.GetPathsView.as_view(), name='GPV'),
-    path('road/', views.RoadSaveView.as_view(), name='SR'),
-    path('basewalk/', views.GetBaseWalkView.as_view()),
+    path('road/', views.RoadSaveView.as_view(), name='RSV'),
+    path('basewalk/', views.GetBaseWalkView.as_view(), name='GBWV'),
+    path('getpaths/', views.GetPathsView.as_view(), name='GPV'),
 ]
