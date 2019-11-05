@@ -91,3 +91,14 @@ class MarkerClass:
 
         return return_dict
 
+
+def arg_max(l):
+    max_index = 0
+    max = 0
+    for i in range(len(l)):
+        if l[i] > max:
+            max = l[i];
+            max_index = i
+
+    return max_index
+

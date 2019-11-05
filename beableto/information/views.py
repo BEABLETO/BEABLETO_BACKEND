@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
 import googlemaps
-from .utilities import bracket_clear
+from .utilities import bracket_clear, arg_max
 from .utilities import MarkerClass
 import json
 import requests
@@ -187,6 +187,7 @@ class GetPathsView(APIView):
                 sub_path = dict()
 
                 # Front의 요청에 의한 포멧팅
+                sub_path['type'] = None
 
                 # Walk 필드
                 sub_path['walk_start_x'] = None
@@ -201,6 +202,7 @@ class GetPathsView(APIView):
                 sub_path['bus_end_x'] = None
                 sub_path['bus_end_y'] = None
                 sub_path['bus_line'] = None
+                sub_path['bus_area'] = None
                 sub_path['bus_height'] = None
 
                 # Train 필드
@@ -215,6 +217,24 @@ class GetPathsView(APIView):
                         sub_path['type'] = "train"
                     elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
                         sub_path['type'] = "bus"
+                        sub_path['bus_start_x'] = sub_google_path['start_location']['lat']
+                        sub_path['bus_start_y'] = sub_google_path['start_location']['lng']
+                        sub_path['bus_end_x'] = sub_google_path['end_location']['lat']
+                        sub_path['bus_end_y'] = sub_google_path['end_location']['lng']
+                        sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
+                        sub_path['bus_area'] = sub_google_path['transit_details']['line']['name'][:2]
+
+                        info = Bus.objects.filter(area=sub_path['bus_area'], line=sub_path['bus_line'])
+                        height = [0] * 3
+                        info_size = 0
+                        for obj in info:
+                            info_size += 1
+                            obj_dict = obj.as_dict()
+                            height[obj_dict['height']] += 1
+                        if info_size is 0:
+                            sub_path['bus_height'] = 2
+                        else:
+                            sub_path['bus_height'] = arg_max(height)
                     else:
                         # 나중에 다시 봐야됨
                         continue

@@ -44,6 +44,14 @@ class Bus(models.Model):
     line = models.CharField(max_length=30)
     height = models.IntegerField()
 
+    def as_dict(self):
+        return {
+            'user': self.user,
+            'area': self.area,
+            'line': self.line,
+            'height': self.height,
+        }
+
 
 class Road(models.Model):
     # 외래키
