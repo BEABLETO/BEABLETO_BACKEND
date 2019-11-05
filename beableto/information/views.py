@@ -215,6 +215,11 @@ class GetPathsView(APIView):
                 if str(sub_google_path['travel_mode']) == "TRANSIT":
                     if "지하철" in sub_google_path['transit_details']['line']['name']:
                         sub_path['type'] = "train"
+                        sub_path['train_start_x'] = sub_google_path['start_location']['lat']
+                        sub_path['train_start_y'] = sub_google_path['start_location']['lng']
+                        sub_path['train_end_x'] = sub_google_path['end_location']['lat']
+                        sub_path['train_end_y'] = sub_google_path['end_location']['lng']
+                        sub_path['train_line'] = sub_google_path['transit_details']['line']['short_name']
                     elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
                         sub_path['type'] = "bus"
                         sub_path['bus_start_x'] = sub_google_path['start_location']['lat']
