@@ -51,29 +51,29 @@ for path in di:
                     print("비저상버스")
                 else:
                     print("저상버스")
-        # else:
-        #     headers = {'Accept': "application/json",
-        #                'Content-Type': "application/json; charset=UTF-8",
-        #                'appKey': "54d398b9-d82b-4361-93ad-fb8366c44e77",
-        #                'Accept-Language': "ko",
-        #                }
-        #     body = {'startX': str(sub_path['start_location']['lng']),
-        #             'startY': str(sub_path['start_location']['lat']),
-        #             'endX': str(sub_path['end_location']['lng']),
-        #             'endY': str(sub_path['end_location']['lat']),
-        #             # 'reqCoordType': "WGS84GEO",
-        #             'startName': "안뇽",
-        #             'endName': "잘가",
-        #             }
-        #
-        #     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
-        #     while str(r) != "<Response [200]>":
-        #         print(r)
-        #
-        #     for element in r.json()['features']:
-        #         if element['geometry']['type'] == "Point":
-        #             print("경로 :", element['geometry']['coordinates'][1], element['geometry']['coordinates'][0])
+        else:
+            headers = {'Accept': "application/json",
+                       'Content-Type': "application/json; charset=UTF-8",
+                       'appKey': "",
+                       'Accept-Language': "ko",
+                       }
+            body = {'startX': str(sub_path['start_location']['lng']),
+                    'startY': str(sub_path['start_location']['lat']),
+                    'endX': str(sub_path['end_location']['lng']),
+                    'endY': str(sub_path['end_location']['lat']),
+                    # 'reqCoordType': "WGS84GEO",
+                    'startName': "안뇽",
+                    'endName': "잘가",
+                    }
+
+            r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+            while str(r) != "<Response [200]>":
+                print(r)
+            for element in r.json()['features']:
+                print(element)
+                if element['geometry']['type'] == "Point":
+                    print("경로 :", element['geometry']['coordinates'][1], element['geometry']['coordinates'][0])
 
 
-        print()
+        print(r)
     print(end="\n\n\n\n")
