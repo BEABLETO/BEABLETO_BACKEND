@@ -1,4 +1,4 @@
-from information.models import Location, Bus
+from information.models import Location, Bus, Road
 from rest_framework import serializers
 
 
@@ -12,3 +12,9 @@ class BusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bus
         fields = ('user', 'area', 'line', 'height')
+
+
+class RoadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Road
+        fields = ('user', 'road', 'slope')

@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer, BusSerializer
+from information.serializers import LocationSerializer, BusSerializer, RoadSerializer
 from information.models import Location, Bus
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -170,7 +170,26 @@ class GetPathsView(APIView):
         rq_data = dict(request.data)
 
 
-# class NearLocationView(APIView):
-#     permission_classes = (IsAuthenticated,)
-#
-#     def get(self, request):
+class RoadSaveView(generics.ListCreateAPIView):
+    queryset = Bus.objects.all()
+    serializer_class = RoadSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        rq_data = dict(request.data)
+        db_data = {}
+        db_data['user'] = request.user.pk
+        road_str = ""
+        for point in request.data['coordinate']:
+            road_str += str(point['x_axis'])
+            road_str += " "
+            road_str += str(point['y_axis'])
+            road_str += " "
+        db_data['road'] = road_str
+        db_data['slope'] = rq_data['slope']
+        serializer = self.get_serializer(data=db_data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)

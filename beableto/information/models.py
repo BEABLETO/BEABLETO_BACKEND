@@ -43,3 +43,11 @@ class Bus(models.Model):
     area = models.CharField(max_length=30)
     line = models.CharField(max_length=30)
     height = models.IntegerField()
+
+
+class Road(models.Model):
+    # 외래키
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+
+    road = models.CharField(max_length=100)
+    slope = models.IntegerField()
