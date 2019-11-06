@@ -288,7 +288,7 @@ class GetPathsView(APIView):
                             r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
                         else:
                             break
-                    road_seq = []
+                    road_seq = [[sub_google_path['start_location']['lat'], sub_google_path['start_location']['lng']]]
                     for element in r.json()['features']:
                         if element['geometry']['type'] == 'LineString':
                             # print(element['geometry']['coordinates'])
@@ -296,6 +296,7 @@ class GetPathsView(APIView):
                                 road_point = [point[1], point[0]] # 좌표계 변환
                                 if road_point not in road_seq:
                                     road_seq.append(road_point)
+                    road_seq.append([sub_google_path['end_location']['lat'], sub_google_path['end_location']['lng']])
                     roads = []
                     walk_seq = []
                     for i in range(len(road_seq) - 1):
@@ -358,7 +359,7 @@ class GetPathsView(APIView):
             sub_path_list = []
             sub_path = {}
 
-            road_seq = []
+            road_seq = [[rq_data['start_x_axis'], rq_data['start_y_axis']]]
             for element in r.json()['features']:
                 if element['geometry']['type'] == 'LineString':
                     # print(element['geometry']['coordinates'])
@@ -366,6 +367,8 @@ class GetPathsView(APIView):
                         road_point = [point[1], point[0]]  # 좌표계 변환
                         if road_point not in road_seq:
                             road_seq.append(road_point)
+            road_seq.append([rq_data['end_x_axis'], rq_data['end_y_axis']])
+
             roads = []
             walk_seq = []
             for i in range(len(road_seq) - 1):
