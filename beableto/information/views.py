@@ -176,15 +176,15 @@ class GetPathsView(APIView):
         gmaps = googlemaps.Client(key=gmap_api_key)
         dt = datetime.datetime.now()
         di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
-        paths = dict()
+        paths = {}
         path_list = []
         path_index = 0
         for google_path in di:
             path_index += 1
-            path = dict()
+            path = {}
             sub_path_list = []
             for sub_google_path in google_path['legs'][0]['steps']:
-                sub_path = dict()
+                sub_path = {}
 
                 # Front의 요청에 의한 포멧팅
                 sub_path['type'] = None
@@ -282,7 +282,8 @@ class GetPathsView(APIView):
                     walk_seq = []
                     for i in range(len(road_seq) - 1):
                         road = [road_seq[i], road_seq[i + 1]]
-                        roads.append(road)
+                        if road not in roads:
+                            roads.append(road)
 
                     for road in roads:
                         road_info = {
@@ -301,20 +302,19 @@ class GetPathsView(APIView):
                             obj_dict = obj.as_dict()
                             vgi_road = [[obj_dict['start_x'], obj_dict['start_y'], obj_dict['slope']], [obj_dict['end_x'], obj_dict['end_y'], obj_dict['slope']]]
                             vgi_roads.append(vgi_road)
-                        print(count)
                         if count >= 1:
                             cur_slope = check_area(road, vgi_roads, k)
                         else:
                             cur_slope = 2
                         road_info['slope'] = cur_slope
                         walk_seq.append(road_info)
-                sub_path['walk_seq'] = walk_seq
+                    sub_path['walk_seq'] = walk_seq
 
                 sub_path_list.append(sub_path)
             path['path'] = sub_path_list
             path_list.append(path)
         paths['paths'] = path_list
-
+        print(path_index)
         return JsonResponse(paths)
 
 
@@ -362,17 +362,6 @@ class RoadSaveView(generics.ListCreateAPIView):
                 middle_y=((road_list[i][1] + road_list[i + 1][1]) / 2),
                 slope=rq_data['slope'],
             )
-            # fragment = (
-            #     road_list[i][0],
-            #     road_list[i][1],
-            #     road_list[i + 1][0],
-            #     road_list[i + 1][1],
-            #     ((road_list[i][0] + road_list[i + 1][0]) / 2),
-            #     ((road_list[i][1] + road_list[i + 1][1]) / 2),
-            # )
-            # data.append(fragment)
-        # mycursor.executemany(sql, data)
-        # mydb.commit()
 
         return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED)
 

@@ -112,21 +112,28 @@ def tri_area(points):
     s = (a + b + c) / 2
     return sqrt(s * (s - a) * (s - b) * (s - c))
 
-def pl_len(road, point):
-    a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
-    b = road[0][1] - a * road[0][0]
-    # ax - y + b = 0
 
-    return abs(a * point[0] + (-1.0) * point[1] + b) / (sqrt(a**2 + (-1.0)**2))
+def pl_len(road, point):
+    if road[0][0] != road[1][0]:
+        a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
+        b = road[0][1] - a * road[0][0]
+        # ax - y + b = 0
+        return abs(a * point[0] + (-1.0) * point[1] + b) / (sqrt(a**2 + (-1.0)**2))
+    else:
+        return abs(point[0] - road[0][0])
 
 
 def find_foot(road, x1, y1):
-    a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
-    b = -1.0
-    c = road[0][1] - a * road[0][0]
-    temp = (-1 * (a * x1 + b * y1 + c) / (a * a + b * b))
-    x = temp * a + x1
-    y = temp * b + y1
+    if road[0][0] != road[1][0]:
+        a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
+        b = -1.0
+        c = road[0][1] - a * road[0][0]
+        temp = (-1 * (a * x1 + b * y1 + c) / (a * a + b * b))
+        x = temp * a + x1
+        y = temp * b + y1
+    else:
+        x = road[0][0]
+        y = y1
     return x, y
 
 def is_bound(a, b, c):
