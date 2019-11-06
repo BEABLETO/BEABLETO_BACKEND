@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
 import googlemaps
-from .utilities import bracket_clear, arg_max
+from .utilities import bracket_clear, arg_max, check_area
 from .utilities import MarkerClass
 import json
 import requests
@@ -178,7 +178,6 @@ class GetPathsView(APIView):
         di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
         paths = dict()
         path_list = []
-        print(di)
         path_index = 0
         for google_path in di:
             path_index += 1
@@ -242,10 +241,74 @@ class GetPathsView(APIView):
                         else:
                             sub_path['bus_height'] = arg_max(height)
                     else:
-                        # 나중에 다시 봐야됨
+                        # 나중에 다시 봐야됨 (버스, 지하철 아닌 경우)
                         continue
                 else:
                     sub_path['type'] = "walk"
+                    sub_path['walk_start_x'] = str(sub_google_path['start_location']['lat'])
+                    sub_path['walk_start_y'] = str(sub_google_path['start_location']['lng'])
+                    sub_path['walk_end_x'] = str(sub_google_path['end_location']['lat'])
+                    sub_path['walk_end_y'] = str(sub_google_path['end_location']['lng'])
+                    sub_path['walk_seq'] = None
+
+                    headers = {'Accept': "application/json",
+                               # 'Content-Type': "application/json; charset=UTF-8",
+                               'appKey': tmap_api_key,
+                               'Accept-Language': "ko",
+                               }
+                    # 우리 (x, y)와 T-MAP(x, y) 순서 다름
+                    body = {'startX': str(sub_google_path['start_location']['lng']),
+                            'startY': str(sub_google_path['start_location']['lat']),
+                            'endX': str(sub_google_path['end_location']['lng']),
+                            'endY': str(sub_google_path['end_location']['lat']),
+                            'startName': "안뇽",
+                            'endName': "잘가",
+                            }
+                    r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+
+                    for i in range(10):
+                        if str(r) != "<Response [200]>":
+                            print(r)
+                            r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+                            break
+                    road_seq = []
+                    for element in r.json()['features']:
+                        if element['geometry']['type'] == 'LineString':
+                            # print(element['geometry']['coordinates'])
+                            for point in element['geometry']['coordinates']:
+                                road_point = [point[1], point[0]] # 좌표계 변환
+                                road_seq.append(road_point)
+                    roads = []
+                    walk_seq = []
+                    for i in range(len(road_seq) - 1):
+                        road = [road_seq[i], road_seq[i + 1]]
+                        roads.append(road)
+
+                    for road in roads:
+                        road_info = {
+                            'start_x': road[0][0],
+                            'start_y': road[0][1],
+                            'end_x': road[1][0],
+                            'end_y': road[1][1],
+                        }
+                        avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
+                        k = 0.00002 # 도로 폭 상수 (2k)
+                        walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k, avg_point[0] + k), middle_y__range=(avg_point[1] - k, avg_point[1] + k))
+                        vgi_roads = []
+                        count = 0
+                        for obj in walk_vgis:
+                            count += 1
+                            obj_dict = obj.as_dict()
+                            vgi_road = [[obj_dict['start_x'], obj_dict['start_y'], obj_dict['slope']], [obj_dict['end_x'], obj_dict['end_y'], obj_dict['slope']]]
+                            vgi_roads.append(vgi_road)
+                        print(count)
+                        if count >= 1:
+                            cur_slope = check_area(road, vgi_roads, k)
+                        else:
+                            cur_slope = 2
+                        road_info['slope'] = cur_slope
+                        walk_seq.append(road_info)
+                sub_path['walk_seq'] = walk_seq
 
                 sub_path_list.append(sub_path)
             path['path'] = sub_path_list
@@ -262,7 +325,6 @@ class RoadSaveView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         rq_data = dict(request.data)
-        print(request.data)
         db_data = {}
         db_data['user'] = request.user.pk
 
@@ -298,6 +360,7 @@ class RoadSaveView(generics.ListCreateAPIView):
                 end_y=road_list[i + 1][1],
                 middle_x=((road_list[i][0] + road_list[i + 1][0]) / 2),
                 middle_y=((road_list[i][1] + road_list[i + 1][1]) / 2),
+                slope=rq_data['slope'],
             )
             # fragment = (
             #     road_list[i][0],
@@ -340,7 +403,6 @@ class GetBaseWalkView(APIView):
         print(body)
         r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
-        print(r)
         for i in range(10):
             if str(r) != "<Response [200]>":
                 print(r)
@@ -358,5 +420,4 @@ class GetBaseWalkView(APIView):
                         ret_data.append(temp_point)
         ret_dict = dict()
         ret_dict['path'] = ret_data
-        print(ret_dict)
         return JsonResponse(ret_dict)

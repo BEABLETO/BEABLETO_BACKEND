@@ -1,3 +1,5 @@
+from math import sqrt
+
 def bracket_clear(string):
     if string.startswith('\"'):
         string = string[1:]
@@ -102,6 +104,57 @@ def arg_max(l):
 
     return max_index
 
-# def is_in_box(box, point):
+
+def tri_area(points):
+    a = sqrt((points[0][0] - points[1][0])**2 + (points[0][1] - points[1][1])**2)
+    b = sqrt((points[1][0] - points[2][0])**2 + (points[1][1] - points[2][1])**2)
+    c = sqrt((points[0][0] - points[2][0])**2 + (points[0][1] - points[2][1])**2)
+    s = (a + b + c) / 2
+    return sqrt(s * (s - a) * (s - b) * (s - c))
+
+def pl_len(road, point):
+    a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
+    b = road[0][1] - a * road[0][0]
+    # ax - y + b = 0
+
+    return abs(a * point[0] + (-1.0) * point[1] + b) / (sqrt(a**2 + (-1.0)**2))
+
+
+def find_foot(road, x1, y1):
+    a = (road[0][1] - road[1][1]) / (road[0][0] - road[1][0])
+    b = -1.0
+    c = road[0][1] - a * road[0][0]
+    temp = (-1 * (a * x1 + b * y1 + c) / (a * a + b * b))
+    x = temp * a + x1
+    y = temp * b + y1
+    return x, y
+
+def is_bound(a, b, c):
+    if a > b:
+        if b <= c <= a:
+            return True
+        return False
+    else:
+        if a <= c <= b:
+            return True
+        return False
+
+
+# road example : [[1, 2], [3, 4]]
+def check_area(road, vgi_roads, k):
+    info = [0] * 3
+    for vgi_road in vgi_roads:
+        for point in vgi_road:
+            fpoint = find_foot(road, point[0], point[1])
+            if pl_len(road, point) <= k and is_bound(road[0][0], road[1][0], fpoint[0]) and is_bound(road[0][1], road[1][1], fpoint[1]):
+                info[point[2]] += 1
+                break
+    return arg_max(info)
+
+
+# 테스트
+vgi_roads = [[[2, 0.5, 2], [3, 2, 2]], [[7, 4, 3], [9, 5, 3]], [[1, 0.5, 1], [3, 2, 1]], [[0.4, 0.7, 2], [0.4, 0.8, 2]]]
+road = [[0, 0], [5, 0]]
+check_area(road, vgi_roads, 1)
 
 

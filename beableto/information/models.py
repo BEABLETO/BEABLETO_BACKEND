@@ -73,3 +73,16 @@ class Fragment(models.Model):
     # For easy computation
     middle_x = models.FloatField()
     middle_y = models.FloatField()
+
+    slope = models.IntegerField(default=1)
+
+    def as_dict(self):
+        return {
+            'start_x': self.start_x,
+            'start_y': self.start_y,
+            'end_x': self.end_x,
+            'end_y': self.end_y,
+            'middle_x': self.middle_x,
+            'middle_y': self.middle_y,
+            'slope': self.slope,
+        }
