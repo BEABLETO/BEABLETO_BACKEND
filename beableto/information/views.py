@@ -195,141 +195,141 @@ class GetPathsView(APIView):
         paths = {}
         path_list = []
         path_index = 0
-        # for google_path in di:
-        #     path_index += 1
-        #     path = {}
-        #     sub_path_list = []
-        #     for sub_google_path in google_path['legs'][0]['steps']:
-        #         sub_path = {}
-        #
-        #         # Front의 요청에 의한 포멧팅
-        #         sub_path['type'] = None
-        #
-        #         # Walk 필드
-        #         sub_path['walk_start_x'] = None
-        #         sub_path['walk_start_y'] = None
-        #         sub_path['walk_end_x'] = None
-        #         sub_path['walk_end_y'] = None
-        #         sub_path['walk_seq'] = None
-        #
-        #         # Bus 필드
-        #         sub_path['bus_start_x'] = None
-        #         sub_path['bus_start_y'] = None
-        #         sub_path['bus_end_x'] = None
-        #         sub_path['bus_end_y'] = None
-        #         sub_path['bus_line'] = None
-        #         sub_path['bus_area'] = None
-        #         sub_path['bus_height'] = None
-        #
-        #         # Train 필드
-        #         sub_path['train_start_x'] = None
-        #         sub_path['train_start_y'] = None
-        #         sub_path['train_end_x'] = None
-        #         sub_path['train_end_y'] = None
-        #         sub_path['train_line'] = None
-        #
-        #         if str(sub_google_path['travel_mode']) == "TRANSIT":
-        #             if "지하철" in sub_google_path['transit_details']['line']['name']:
-        #                 sub_path['type'] = "train"
-        #                 sub_path['train_start_x'] = sub_google_path['start_location']['lat']
-        #                 sub_path['train_start_y'] = sub_google_path['start_location']['lng']
-        #                 sub_path['train_end_x'] = sub_google_path['end_location']['lat']
-        #                 sub_path['train_end_y'] = sub_google_path['end_location']['lng']
-        #                 sub_path['train_line'] = sub_google_path['transit_details']['line']['short_name']
-        #             elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
-        #                 sub_path['type'] = "bus"
-        #                 sub_path['bus_start_x'] = sub_google_path['start_location']['lat']
-        #                 sub_path['bus_start_y'] = sub_google_path['start_location']['lng']
-        #                 sub_path['bus_end_x'] = sub_google_path['end_location']['lat']
-        #                 sub_path['bus_end_y'] = sub_google_path['end_location']['lng']
-        #                 sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
-        #                 sub_path['bus_area'] = sub_google_path['transit_details']['line']['name'][:2]
-        #
-        #                 info = Bus.objects.filter(area=sub_path['bus_area'], line=sub_path['bus_line'])
-        #                 height = [0] * 3
-        #                 info_size = 0
-        #                 for obj in info:
-        #                     info_size += 1
-        #                     obj_dict = obj.as_dict()
-        #                     height[obj_dict['height']] += 1
-        #                 if info_size is 0:
-        #                     sub_path['bus_height'] = 2
-        #                 else:
-        #                     sub_path['bus_height'] = arg_max(height)
-        #             else:
-        #                 # 나중에 다시 봐야됨 (버스, 지하철 아닌 경우)
-        #                 continue
-        #         else:
-        #             sub_path['type'] = "walk"
-        #             sub_path['walk_start_x'] = str(sub_google_path['start_location']['lat'])
-        #             sub_path['walk_start_y'] = str(sub_google_path['start_location']['lng'])
-        #             sub_path['walk_end_x'] = str(sub_google_path['end_location']['lat'])
-        #             sub_path['walk_end_y'] = str(sub_google_path['end_location']['lng'])
-        #             sub_path['walk_seq'] = None
-        #
-        #             headers = {'Accept': "application/json",
-        #                        # 'Content-Type': "application/json; charset=UTF-8",
-        #                        'appKey': tmap_api_key,
-        #                        'Accept-Language': "ko",
-        #                        }
-        #             # 우리 (x, y)와 T-MAP(x, y) 순서 다름
-        #             body = {'startX': str(sub_google_path['start_location']['lng']),
-        #                     'startY': str(sub_google_path['start_location']['lat']),
-        #                     'endX': str(sub_google_path['end_location']['lng']),
-        #                     'endY': str(sub_google_path['end_location']['lat']),
-        #                     'startName': "안뇽",
-        #                     'endName': "잘가",
-        #                     }
-        #             r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
-        #
-        #             for i in range(10):
-        #                 if str(r) != "<Response [200]>":
-        #                     print(r)
-        #                     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
-        #                 else:
-        #                     break
-        #             road_seq = []
-        #             for element in r.json()['features']:
-        #                 if element['geometry']['type'] == 'LineString':
-        #                     # print(element['geometry']['coordinates'])
-        #                     for point in element['geometry']['coordinates']:
-        #                         road_point = [point[1], point[0]] # 좌표계 변환
-        #                         if road_point not in road_seq:
-        #                             road_seq.append(road_point)
-        #             roads = []
-        #             walk_seq = []
-        #             for i in range(len(road_seq) - 1):
-        #                 road = [road_seq[i], road_seq[i + 1]]
-        #                 roads.append(road)
-        #
-        #             for road in roads:
-        #                 road_info = {
-        #                     'start_x': road[0][0],
-        #                     'start_y': road[0][1],
-        #                     'end_x': road[1][0],
-        #                     'end_y': road[1][1],
-        #                 }
-        #                 avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
-        #                 k = 0.00003 # 도로 폭 상수 (2k)
-        #                 walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k, avg_point[0] + k), middle_y__range=(avg_point[1] - k, avg_point[1] + k))
-        #                 vgi_roads = []
-        #                 count = 0
-        #                 for obj in walk_vgis:
-        #                     count += 1
-        #                     obj_dict = obj.as_dict()
-        #                     vgi_road = [[obj_dict['start_x'], obj_dict['start_y'], obj_dict['slope']], [obj_dict['end_x'], obj_dict['end_y'], obj_dict['slope']]]
-        #                     vgi_roads.append(vgi_road)
-        #                 if count >= 1:
-        #                     cur_slope = check_area(road, vgi_roads, k)
-        #                 else:
-        #                     cur_slope = 3
-        #                 road_info['slope'] = cur_slope
-        #                 walk_seq.append(road_info)
-        #             sub_path['walk_seq'] = walk_seq
-        #
-        #         sub_path_list.append(sub_path)
-        #     path['path'] = sub_path_list
-        #     path_list.append(path)
+        for google_path in di:
+            path_index += 1
+            path = {}
+            sub_path_list = []
+            for sub_google_path in google_path['legs'][0]['steps']:
+                sub_path = {}
+
+                # Front의 요청에 의한 포멧팅
+                sub_path['type'] = None
+
+                # Walk 필드
+                sub_path['walk_start_x'] = None
+                sub_path['walk_start_y'] = None
+                sub_path['walk_end_x'] = None
+                sub_path['walk_end_y'] = None
+                sub_path['walk_seq'] = None
+
+                # Bus 필드
+                sub_path['bus_start_x'] = None
+                sub_path['bus_start_y'] = None
+                sub_path['bus_end_x'] = None
+                sub_path['bus_end_y'] = None
+                sub_path['bus_line'] = None
+                sub_path['bus_area'] = None
+                sub_path['bus_height'] = None
+
+                # Train 필드
+                sub_path['train_start_x'] = None
+                sub_path['train_start_y'] = None
+                sub_path['train_end_x'] = None
+                sub_path['train_end_y'] = None
+                sub_path['train_line'] = None
+
+                if str(sub_google_path['travel_mode']) == "TRANSIT":
+                    if "지하철" in sub_google_path['transit_details']['line']['name']:
+                        sub_path['type'] = "train"
+                        sub_path['train_start_x'] = sub_google_path['start_location']['lat']
+                        sub_path['train_start_y'] = sub_google_path['start_location']['lng']
+                        sub_path['train_end_x'] = sub_google_path['end_location']['lat']
+                        sub_path['train_end_y'] = sub_google_path['end_location']['lng']
+                        sub_path['train_line'] = sub_google_path['transit_details']['line']['short_name']
+                    elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
+                        sub_path['type'] = "bus"
+                        sub_path['bus_start_x'] = sub_google_path['start_location']['lat']
+                        sub_path['bus_start_y'] = sub_google_path['start_location']['lng']
+                        sub_path['bus_end_x'] = sub_google_path['end_location']['lat']
+                        sub_path['bus_end_y'] = sub_google_path['end_location']['lng']
+                        sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
+                        sub_path['bus_area'] = sub_google_path['transit_details']['line']['name'][:2]
+
+                        info = Bus.objects.filter(area=sub_path['bus_area'], line=sub_path['bus_line'])
+                        height = [0] * 3
+                        info_size = 0
+                        for obj in info:
+                            info_size += 1
+                            obj_dict = obj.as_dict()
+                            height[obj_dict['height']] += 1
+                        if info_size is 0:
+                            sub_path['bus_height'] = 2
+                        else:
+                            sub_path['bus_height'] = arg_max(height)
+                    else:
+                        # 나중에 다시 봐야됨 (버스, 지하철 아닌 경우)
+                        continue
+                else:
+                    sub_path['type'] = "walk"
+                    sub_path['walk_start_x'] = str(sub_google_path['start_location']['lat'])
+                    sub_path['walk_start_y'] = str(sub_google_path['start_location']['lng'])
+                    sub_path['walk_end_x'] = str(sub_google_path['end_location']['lat'])
+                    sub_path['walk_end_y'] = str(sub_google_path['end_location']['lng'])
+                    sub_path['walk_seq'] = None
+
+                    headers = {'Accept': "application/json",
+                               # 'Content-Type': "application/json; charset=UTF-8",
+                               'appKey': tmap_api_key,
+                               'Accept-Language': "ko",
+                               }
+                    # 우리 (x, y)와 T-MAP(x, y) 순서 다름
+                    body = {'startX': str(sub_google_path['start_location']['lng']),
+                            'startY': str(sub_google_path['start_location']['lat']),
+                            'endX': str(sub_google_path['end_location']['lng']),
+                            'endY': str(sub_google_path['end_location']['lat']),
+                            'startName': "안뇽",
+                            'endName': "잘가",
+                            }
+                    r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+
+                    for i in range(10):
+                        if str(r) != "<Response [200]>":
+                            print(r)
+                            r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+                        else:
+                            break
+                    road_seq = []
+                    for element in r.json()['features']:
+                        if element['geometry']['type'] == 'LineString':
+                            # print(element['geometry']['coordinates'])
+                            for point in element['geometry']['coordinates']:
+                                road_point = [point[1], point[0]] # 좌표계 변환
+                                if road_point not in road_seq:
+                                    road_seq.append(road_point)
+                    roads = []
+                    walk_seq = []
+                    for i in range(len(road_seq) - 1):
+                        road = [road_seq[i], road_seq[i + 1]]
+                        roads.append(road)
+
+                    for road in roads:
+                        road_info = {
+                            'start_x': road[0][0],
+                            'start_y': road[0][1],
+                            'end_x': road[1][0],
+                            'end_y': road[1][1],
+                        }
+                        avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
+                        k = 0.00003 # 도로 폭 상수 (2k)
+                        walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k, avg_point[0] + k), middle_y__range=(avg_point[1] - k, avg_point[1] + k))
+                        vgi_roads = []
+                        count = 0
+                        for obj in walk_vgis:
+                            count += 1
+                            obj_dict = obj.as_dict()
+                            vgi_road = [[obj_dict['start_x'], obj_dict['start_y'], obj_dict['slope']], [obj_dict['end_x'], obj_dict['end_y'], obj_dict['slope']]]
+                            vgi_roads.append(vgi_road)
+                        if count >= 1:
+                            cur_slope = check_area(road, vgi_roads, k)
+                        else:
+                            cur_slope = 3
+                        road_info['slope'] = cur_slope
+                        walk_seq.append(road_info)
+                    sub_path['walk_seq'] = walk_seq
+
+                sub_path_list.append(sub_path)
+            path['path'] = sub_path_list
+            path_list.append(path)
 
         # WALK ONLY PATH -----------------------------------------------------------------------------
         headers = {'Accept': "application/json",
@@ -380,7 +380,7 @@ class GetPathsView(APIView):
                     'end_y': road[1][1],
                 }
                 avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
-                k = 0.0001  # 도로 폭 상수 (2k)
+                k = 0.0003  # 도로 폭 상수 (2k)
                 walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 4, avg_point[0] + k * 4),
                                                     middle_y__range=(avg_point[1] - k * 4, avg_point[1] + k * 4))
                 vgi_roads = []

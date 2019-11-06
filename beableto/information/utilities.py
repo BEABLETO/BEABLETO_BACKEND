@@ -148,6 +148,7 @@ def is_bound(a, b, c):
 
 
 # road example : [[1, 2], [3, 4]]
+# vgi_roads example : [[[1, 2, 2], [3, 4, 2]], [[13, 22, 2], [31, 43, 2]]]
 def check_area(road, vgi_roads, k):
     info = [0] * 3
     for vgi_road in vgi_roads:
@@ -155,6 +156,11 @@ def check_area(road, vgi_roads, k):
             fpoint = find_foot(road, point[0], point[1])
             if pl_len(road, point) <= k and is_bound(road[0][0], road[1][0], fpoint[0]) and is_bound(road[0][1], road[1][1], fpoint[1]):
                 info[point[2]] += 1
+                break
+        for point in road:
+            fpoint = find_foot(vgi_road, point[0], point[1])
+            if pl_len(vgi_road, point) <= k and is_bound(vgi_road[0][0], vgi_road[1][0], fpoint[0]) and is_bound(vgi_road[0][1], vgi_road[1][1], fpoint[1]):
+                info[vgi_road[0][2]] += 1
                 break
     print(info)
     if info[0] + info[1] + info[2] > 0:
