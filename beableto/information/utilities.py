@@ -156,7 +156,11 @@ def check_area(road, vgi_roads, k):
             if pl_len(road, point) <= k and is_bound(road[0][0], road[1][0], fpoint[0]) and is_bound(road[0][1], road[1][1], fpoint[1]):
                 info[point[2]] += 1
                 break
-    return arg_max(info)
+    print(info)
+    if info[0] + info[1] + info[2] > 0:
+        return arg_max(info)
+    else:
+        return 3
 
 
 # 테스트

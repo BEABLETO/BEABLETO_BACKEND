@@ -23,4 +23,4 @@ class RoadSerializer(serializers.ModelSerializer):
 class FragmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fragment
-        fields = ('start_x', 'start_y', 'end_x', 'end_y', 'middle_x', 'middle_y')
+        fields = ('start_x', 'start_y', 'end_x', 'end_y', 'middle_x', 'middle_y', 'slope')
