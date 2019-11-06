@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer, BusSerializer, RoadSerializer
-from information.models import Location, Bus
+from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer
+from information.models import Location, Bus, Fragment, Road
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
@@ -12,6 +12,7 @@ from .utilities import MarkerClass
 import json
 import requests
 import datetime
+import mysql.connector
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -146,7 +147,7 @@ class LocationGetMarkersVIew(APIView):
 
 
 class BusSaveView(generics.ListCreateAPIView):
-    queryset = Bus.objects.all()
+    queryset = Road.objects.all()
     serializer_class = BusSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -174,10 +175,10 @@ class GetPathsView(APIView):
             f.close
         gmaps = googlemaps.Client(key=gmap_api_key)
         dt = datetime.datetime.now()
-        di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True)
+        di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
         paths = dict()
         path_list = []
-
+        print(di)
         path_index = 0
         for google_path in di:
             path_index += 1
@@ -255,28 +256,62 @@ class GetPathsView(APIView):
 
 
 class RoadSaveView(generics.ListCreateAPIView):
-    queryset = Bus.objects.all()
+    queryset = Road.objects.all()
     serializer_class = RoadSerializer
     permission_classes = (IsAuthenticated,)
 
     def create(self, request, *args, **kwargs):
         rq_data = dict(request.data)
+        print(request.data)
         db_data = {}
         db_data['user'] = request.user.pk
+
+        # Saving Basic VGI Information
         road_str = ""
+        road_list = []
         for point in request.data['coordinate']:
+            point_list = []
             road_str += str(point['x_axis'])
+            point_list.append(float(point['x_axis']))
             road_str += " "
             road_str += str(point['y_axis'])
+            point_list.append(float(point['y_axis']))
             road_str += " "
+            road_list.append(point_list)
         db_data['road'] = road_str
         db_data['slope'] = rq_data['slope']
         serializer = self.get_serializer(data=db_data)
         serializer.is_valid(raise_exception=True)
+        # perform_create overriding 귀찮아서 그냥 Create
+        obj = Road.objects.create(
+            road=road_str,
+            slope=rq_data['slope'],
+        )
 
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
+        # Saving Fragments
+        for i in range(len(road_list) - 1):
+            Fragment.objects.create(
+                road=obj,
+                start_x=road_list[i][0],
+                start_y=road_list[i][1],
+                end_x=road_list[i + 1][0],
+                end_y=road_list[i + 1][1],
+                middle_x=((road_list[i][0] + road_list[i + 1][0]) / 2),
+                middle_y=((road_list[i][1] + road_list[i + 1][1]) / 2),
+            )
+            # fragment = (
+            #     road_list[i][0],
+            #     road_list[i][1],
+            #     road_list[i + 1][0],
+            #     road_list[i + 1][1],
+            #     ((road_list[i][0] + road_list[i + 1][0]) / 2),
+            #     ((road_list[i][1] + road_list[i + 1][1]) / 2),
+            # )
+            # data.append(fragment)
+        # mycursor.executemany(sql, data)
+        # mydb.commit()
+
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED)
 
 
 # 사용자의 경로 구성을 돕기위한 정보 Return View
@@ -306,9 +341,11 @@ class GetBaseWalkView(APIView):
         r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
         print(r)
-        while str(r) != "<Response [200]>":
-            print(r)
-            r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+        for i in range(10):
+            if str(r) != "<Response [200]>":
+                print(r)
+                r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
+                break
         ret_data =[]
         for element in r.json()['features']:
             if element['geometry']['type'] == 'LineString':

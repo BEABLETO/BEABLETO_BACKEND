@@ -57,5 +57,19 @@ class Road(models.Model):
     # 외래키
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
 
-    road = models.CharField(max_length=100)
+    road = models.CharField(max_length=5000)
     slope = models.IntegerField()
+
+
+class Fragment(models.Model):
+    # 외래키
+    road = models.ForeignKey(Road, on_delete=models.CASCADE, null=True)
+
+    start_x = models.FloatField()
+    start_y = models.FloatField()
+    end_x = models.FloatField()
+    end_y = models.FloatField()
+
+    # For easy computation
+    middle_x = models.FloatField()
+    middle_y = models.FloatField()

@@ -1,4 +1,4 @@
-from information.models import Location, Bus, Road
+from information.models import Location, Bus, Road, Fragment
 from rest_framework import serializers
 
 
@@ -18,3 +18,9 @@ class RoadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Road
         fields = ('user', 'road', 'slope')
+
+
+class FragmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fragment
+        fields = ('start_x', 'start_y', 'end_x', 'end_y', 'middle_x', 'middle_y')

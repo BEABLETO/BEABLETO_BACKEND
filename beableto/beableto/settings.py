@@ -87,7 +87,8 @@ DATABASES = {
         'NAME': 'beableto',  # 데이터베이스 이름
         'USER': 'root',  # 데이터베이스 연결시 사용할 유저 이름
         'PASSWORD': 'kimyoungi99',  # 유저 패스워드
-        'HOST': 'localhost', 'PORT': ''
+        'HOST': 'localhost',
+        'PORT': '',
     }
 
 }
