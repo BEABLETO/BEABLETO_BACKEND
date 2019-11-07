@@ -261,10 +261,10 @@ class GetPathsView(APIView):
                         continue
                 else:
                     sub_path['type'] = "walk"
-                    sub_path['walk_start_x'] = str(sub_google_path['start_location']['lat'])
-                    sub_path['walk_start_y'] = str(sub_google_path['start_location']['lng'])
-                    sub_path['walk_end_x'] = str(sub_google_path['end_location']['lat'])
-                    sub_path['walk_end_y'] = str(sub_google_path['end_location']['lng'])
+                    sub_path['walk_start_x'] = sub_google_path['start_location']['lat']
+                    sub_path['walk_start_y'] = sub_google_path['start_location']['lng']
+                    sub_path['walk_end_x'] = sub_google_path['end_location']['lat']
+                    sub_path['walk_end_y'] = sub_google_path['end_location']['lng']
                     sub_path['walk_seq'] = None
 
                     headers = {'Accept': "application/json",
@@ -383,7 +383,7 @@ class GetPathsView(APIView):
                     'end_y': road[1][1],
                 }
                 avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
-                k = 0.0003  # 도로 폭 상수 (2k)
+                k = 0.0005  # 도로 폭 상수 (2k)
                 walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 4, avg_point[0] + k * 4),
                                                     middle_y__range=(avg_point[1] - k * 4, avg_point[1] + k * 4))
                 vgi_roads = []
@@ -403,7 +403,7 @@ class GetPathsView(APIView):
             sub_path['walk_seq'] = walk_seq
 
             # Front의 요청에 의한 포멧팅
-            sub_path['type'] = None
+            sub_path['type'] = 'walk'
 
             # Walk 필드
             sub_path['walk_start_x'] = rq_data['start_x_axis']
