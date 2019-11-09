@@ -190,8 +190,12 @@ class GetPathsView(APIView):
             gmap_api_key = f.readline()
             f.close
         gmaps = googlemaps.Client(key=gmap_api_key)
-        dt = datetime.datetime.now()
+        # dt = datetime.datetime.now()
+        d = datetime.date(2019, 11, 10)
+        t = datetime.time(13, 23, 38)
+        dt = datetime.datetime.combine(d, t)
         di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
+        print(di)
         paths = {}
         path_list = []
         path_index = 0
@@ -242,7 +246,10 @@ class GetPathsView(APIView):
                         sub_path['bus_start_y'] = sub_google_path['start_location']['lng']
                         sub_path['bus_end_x'] = sub_google_path['end_location']['lat']
                         sub_path['bus_end_y'] = sub_google_path['end_location']['lng']
-                        sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
+                        if 'short_name' in sub_google_path['transit_details']['line']:
+                            sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
+                        else:
+                            sub_path['bus_line'] = sub_google_path['transit_details']['line']['name']
                         sub_path['bus_area'] = sub_google_path['transit_details']['line']['name'][:2]
 
                         info = Bus.objects.filter(area=sub_path['bus_area'], line=sub_path['bus_line'])
@@ -311,8 +318,8 @@ class GetPathsView(APIView):
                             'end_y': road[1][1],
                         }
                         avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
-                        k = 0.00003 # 도로 폭 상수 (2k)
-                        walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k, avg_point[0] + k), middle_y__range=(avg_point[1] - k, avg_point[1] + k))
+                        k = 0.0002 # 도로 폭 상수 (2k)
+                        walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 10, avg_point[0] + k * 10), middle_y__range=(avg_point[1] - k * 10, avg_point[1] + k * 10))
                         vgi_roads = []
                         count = 0
                         for obj in walk_vgis:
@@ -383,9 +390,9 @@ class GetPathsView(APIView):
                     'end_y': road[1][1],
                 }
                 avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
-                k = 0.0005  # 도로 폭 상수 (2k)
-                walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 4, avg_point[0] + k * 4),
-                                                    middle_y__range=(avg_point[1] - k * 4, avg_point[1] + k * 4))
+                k = 0.0002  # 도로 폭 상수 (2k)
+                walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 10, avg_point[0] + k * 10),
+                                                    middle_y__range=(avg_point[1] - k * 10, avg_point[1] + k * 10))
                 vgi_roads = []
                 count = 0
                 for obj in walk_vgis:
@@ -430,9 +437,8 @@ class GetPathsView(APIView):
             sub_path_list.append(sub_path)
             path['path'] = sub_path_list
             path_list.append(path)
-
-        paths['paths'] = path_list
         print(path_index)
+        paths['paths'] = path_list
         return JsonResponse(paths)
 
 
