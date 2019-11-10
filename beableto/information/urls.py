@@ -12,4 +12,5 @@ urlpatterns = [
     path('road/', views.RoadSaveView.as_view(), name='RSV'),
     path('basewalk/', views.GetBaseWalkView.as_view(), name='GBWV'),
     path('getpaths/', views.GetPathsView.as_view(), name='GPV'),
+    path('getallmarkers/', views.LocationGetAllMarkersVIew.as_view(), name='MGAV'),
 ]
