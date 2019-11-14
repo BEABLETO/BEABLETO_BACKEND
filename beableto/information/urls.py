@@ -14,4 +14,5 @@ urlpatterns = [
     path('getpaths/', views.GetPathsView.as_view(), name='GPV'),
     path('getallmarkers/', views.LocationGetAllMarkersVIew.as_view(), name='MGAV'),
     path('savepose/', views.CurPoseSaveView.as_view(), name='CPSV'),
+    path('getpose/', views.GetPositionsView.as_view(), name='GPV'),
 ]

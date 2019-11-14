@@ -577,8 +577,7 @@ class CurPoseSaveView(generics.ListCreateAPIView):
     queryset = Record.objects.all()
     serializer_class = CurPoseSerializer
 
-
-    def creat(self, request):
+    def create(self, request, *args, **kwargs):
         rq_data = dict(request.data)
 
         rq_data['user'] = request.user.pk
@@ -590,3 +589,28 @@ class CurPoseSaveView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class GetPositionsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+
+        limit = datetime.datetime.now() - datetime.timedelta(hours=rq_data['time'])
+        info = Record.objects.filter(user_id=request.user.pk)
+
+        res_list = []
+
+        for obj in info:
+            obj_dict = obj.as_dict()
+            if obj_dict['time'] > limit:
+                res_list.append(obj_dict)
+
+        pos = dict()
+        pos['locations'] = res_list
+        return JsonResponse(pos)
+
+
+
+

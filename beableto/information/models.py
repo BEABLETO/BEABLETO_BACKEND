@@ -98,7 +98,6 @@ class Record(models.Model):
 
     def as_dict(self):
         return {
-            'user': self.user,
             'x': self.x,
             'y': self.y,
             'time': self.time
