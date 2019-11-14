@@ -1,5 +1,6 @@
 from math import sqrt
 
+
 def bracket_clear(string):
     if string.startswith('\"'):
         string = string[1:]
@@ -31,7 +32,6 @@ class MarkerClass:
         if toilet:
             self.toilet += 1
         self.location_name = bracket_clear(name)
-
 
     def isSame(self, x, y):
         if self.x == x and self.y == y:
@@ -94,12 +94,42 @@ class MarkerClass:
         return return_dict
 
 
+class FragmentClass:
+    start_x = 0.0
+    start_y = 0.0
+    end_x = 0.0
+    end_y = 0.0
+    slope = [0] * 3
+
+    def __init__(self, start_x, start_y, end_x, end_y, slope):
+        self.start_x = start_x
+        self.start_y = start_y
+        self.end_x = end_x
+        self.end_y = end_y
+        self.slope[slope] = 1
+
+    def updateValue(self, slope):
+        self.slope[slope] += 1
+
+    def getValue(self):
+        return arg_max(self.slope)
+
+    def getAsDict(self):
+        return {
+            'start_x': self.start_x,
+            'start_y': self.start_y,
+            'end_x': self.end_x,
+            'end_y': self.end_y,
+            'slope': self.getValue(),
+        }
+
+
 def arg_max(l):
     max_index = 0
     max = 0
     for i in range(len(l)):
         if l[i] > max:
-            max = l[i];
+            max = l[i]
             max_index = i
 
     return max_index
@@ -135,6 +165,7 @@ def find_foot(road, x1, y1):
         x = road[0][0]
         y = y1
     return x, y
+
 
 def is_bound(a, b, c):
     if a > b:

@@ -8,12 +8,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
 import googlemaps
 from .utilities import bracket_clear, arg_max, check_area
-from .utilities import MarkerClass
+from .utilities import MarkerClass, FragmentClass
 import json
 import requests
 import datetime
-import mysql.connector
-
+from django.db.models import Q
 
 class LocationSaveView(generics.ListCreateAPIView):
     queryset = Location.objects.all()
@@ -128,8 +127,6 @@ class LocationGetMarkersVIew(APIView):
     def post(self, request):
         rq_data = dict(request.data)
         # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
-        print(rq_data['lsx'])
-        print(rq_data['rnx'])
         info = Location.objects.filter(x_axis__range=(float(rq_data['lsx']), float(rq_data['rnx'])), y_axis__range=(float(rq_data['lsy']), float(rq_data['rny'])))
 
         index = 0
@@ -612,5 +609,38 @@ class GetPositionsView(APIView):
         return JsonResponse(pos)
 
 
+class GetFragmentsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+
+        info = Fragment.objects.filter(Q(start_x__range=(float(rq_data['lsx']), float(rq_data['rnx'])), start_y__range=(float(rq_data['lsy']), float(rq_data['rny']))) | Q(end_x__range=(float(rq_data['lsx']), float(rq_data['rnx'])), end_y__range=(float(rq_data['lsy']), float(rq_data['rny']))))
+
+        index = 0
+        fragmet_list = []
+        cord_dict = {}
+        fragment_set = set()
+        for obj in info:
+            obj_dict = obj.as_dict()
+            obj_cord = (obj_dict['start_x'], obj_dict['start_y'], obj_dict['end_x'], obj_dict['end_y'])
+            if obj_cord in fragment_set:
+                key = str(obj_dict['start_x']) + str(obj_dict['start_y']) + str(obj_dict['end_x']) + str(obj_dict['end_y'])
+                fragment_index = cord_dict[key]
+                fragmet_list[fragment_index].updateValue(obj_dict['slope'])
+            else:
+                fragment_set.add(obj_cord)
+                key = str(obj_dict['start_x']) + str(obj_dict['start_y']) + str(obj_dict['end_x']) + str(obj_dict['end_y'])
+                cord_dict[key] = index
+                index += 1
+                newFragment = FragmentClass(obj_dict['start_x'], obj_dict['start_y'], obj_dict['end_x'], obj_dict['end_y'], obj_dict['slope'])
+                fragmet_list.append(newFragment)
+
+        ret_list = []
+        for f in fragmet_list:
+            ret_list.append(f.getAsDict())
+        fragment = dict()
+        fragment['fragments'] = ret_list
+        return JsonResponse(fragment)
 
 
