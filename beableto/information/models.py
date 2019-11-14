@@ -86,3 +86,20 @@ class Fragment(models.Model):
             'middle_y': self.middle_y,
             'slope': self.slope,
         }
+
+
+class Record(models.Model):
+    # 외래키
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+
+    x = models.FloatField()
+    y = models.FloatField()
+    time = models.DateTimeField(auto_now_add=True)
+
+    def as_dict(self):
+        return {
+            'user': self.user,
+            'x': self.x,
+            'y': self.y,
+            'time': self.time
+        }

@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer
-from information.models import Location, Bus, Fragment, Road
+from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer, CurPoseSerializer
+from information.models import Location, Bus, Fragment, Road, Record
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
@@ -22,7 +22,6 @@ class LocationSaveView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         rq_data = dict(request.data)
-        print(rq_data)
         rq_data['user'] = request.user.pk
         rq_data['location_name'] = rq_data['location_name'][0]
         rq_data['x_axis'] = rq_data['x_axis'][0]
@@ -571,3 +570,23 @@ class GetBaseWalkView(APIView):
         ret_dict = dict()
         ret_dict['path'] = ret_data
         return JsonResponse(ret_dict)
+
+
+class CurPoseSaveView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Record.objects.all()
+    serializer_class = CurPoseSerializer
+
+
+    def creat(self, request):
+        rq_data = dict(request.data)
+
+        rq_data['user'] = request.user.pk
+        rq_data['time'] = datetime.datetime.now()
+
+        serializer = self.get_serializer(data=rq_data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)

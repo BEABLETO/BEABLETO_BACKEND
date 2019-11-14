@@ -1,4 +1,4 @@
-from information.models import Location, Bus, Road, Fragment
+from information.models import Location, Bus, Road, Fragment, Record
 from rest_framework import serializers
 
 
@@ -24,3 +24,9 @@ class FragmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fragment
         fields = ('start_x', 'start_y', 'end_x', 'end_y', 'middle_x', 'middle_y', 'slope')
+
+
+class CurPoseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Record
+        fields = ('user', 'x', 'y', 'time')
