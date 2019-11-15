@@ -14,6 +14,7 @@ import requests
 import datetime
 from django.db.models import Q
 
+
 class LocationSaveView(generics.ListCreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -266,7 +267,7 @@ class GetPathsView(APIView):
                 sub_path['train_line'] = None
 
                 if str(sub_google_path['travel_mode']) == "TRANSIT":
-                    if "지하철" in sub_google_path['transit_details']['line']['name'] or "전철"  in sub_google_path['transit_details']['line']['name']:
+                    if "지하철" in sub_google_path['transit_details']['line']['name'] or "전철" in sub_google_path['transit_details']['line']['name']:
                         sub_path['type'] = "train"
                         sub_path['train_start_x'] = sub_google_path['start_location']['lat']
                         sub_path['train_start_y'] = sub_google_path['start_location']['lng']

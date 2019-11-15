@@ -102,3 +102,18 @@ class Record(models.Model):
             'y': self.y,
             'time': self.time
         }
+
+
+class SeoulElevator(models.Model):
+    line = models.IntegerField()
+    station = models.CharField(max_length=300)
+    x_axis = models.FloatField()
+    y_axis = models.FloatField()
+
+    def as_dict(self):
+        return {
+            'x_axis': self.x_axis,
+            'y_axis': self.y_axis,
+            'station': self.station,
+            'line': self.line,
+        }
