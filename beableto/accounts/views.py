@@ -30,7 +30,6 @@ class UserInfo(APIView):
         info = {'email': request.user.email,
                 'username': request.user.username,
                 }
-        print(info)
         return JsonResponse(info)
 
 

@@ -16,4 +16,5 @@ urlpatterns = [
     path('savepose/', views.CurPoseSaveView.as_view(), name='CPSV'),
     path('getpose/', views.GetPositionsView.as_view(), name='GPV'),
     path('getfragment/', views.GetFragmentsView.as_view(), name='GFV'),
+    path('getlocation/', views.GetInfoByNameView.as_view()),
 ]

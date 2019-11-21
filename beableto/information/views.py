@@ -162,8 +162,7 @@ class LocationGetMarkersVIew(APIView):
 class LocationGetAllMarkersVIew(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request):
-        rq_data = dict(request.data)
+    def get(self, request):
         # info = Location.objects.filter(x_axis=rq_data['x_axis'][0], y_axis=rq_data['y_axis'][0])
         info = Location.objects.filter()
 
@@ -645,3 +644,38 @@ class GetFragmentsView(APIView):
         return JsonResponse(fragment)
 
 
+class GetInfoByNameView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+        info = Location.objects.filter()
+
+        index = 0
+        marker_list = []
+        cord_dict = {}
+        marker_set = set()
+        for obj in info:
+            obj_dict = obj.as_dict()
+            if obj_dict['location_name'] in rq_data['name'] or rq_data['name'] in obj_dict['location_name']:
+                obj_cord = (obj_dict['x_axis'], obj_dict['y_axis'])
+                if obj_cord in marker_set:
+                    key = str(obj_cord[0]) + " " + str(obj_cord[1])
+                    marker_index = cord_dict[key]
+                    marker_list[marker_index].updataValue(obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'])
+                else:
+                    marker_set.add(obj_cord)
+                    key = str(obj_cord[0]) + " " + str(obj_cord[1])
+                    cord_dict[key] = index
+                    index += 1
+                    newMarker = MarkerClass(obj_cord[0], obj_cord[1], obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'], obj_dict['location_name'])
+                    marker_list.append(newMarker)
+
+        ret_list = []
+        for m in marker_list:
+            # j = json.dumps(d)
+            # j = j[1:-1]
+            ret_list.append(m.getAsDict())
+        markers = dict()
+        markers['markers'] = ret_list
+        return JsonResponse(markers)
