@@ -225,9 +225,10 @@ class GetPathsView(APIView):
         gmaps = googlemaps.Client(key=gmap_api_key)
         # dt = datetime.datetime.now()
         d = datetime.date(2019, 12, 2)
-        t = datetime.time(2, 23, 38)
+        t = datetime.time(14, 23, 38)
         dt = datetime.datetime.combine(d, t)
         di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
+        print(rq_data)
         paths = {}
         path_list = []
         for path_index in range(0, len(di)):
@@ -317,6 +318,7 @@ class GetPathsView(APIView):
                             'endY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']),
                             'startName': "안뇽",
                             'endName': "잘가",
+                            'searchOption': 30
                             }
                     if sub_google_path < len(di[path_index]['legs'][0]['steps']) - 1:
                         if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name']:
@@ -324,13 +326,15 @@ class GetPathsView(APIView):
                                 elevator = Elevator.objects.filter()
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
-                                    if ele_dict['name'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
+                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
+                                        print("aasd")
                                         body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
                                                 'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
-                                                'endX': str(sub_path['y_axis']),
-                                                'endY': str(sub_path['x_axis']),
+                                                'endX': str(ele_dict['y_axis']),
+                                                'endY': str(ele_dict['x_axis']),
                                                 'startName': "안뇽",
                                                 'endName': "잘가",
+                                                'searchOption': 30
                                                 }
                                         sub_path['walk_sub'] = ele_dict['description']
 
@@ -399,6 +403,7 @@ class GetPathsView(APIView):
                 'endY': str(rq_data['end_x_axis']),
                 'startName': "안뇽",
                 'endName': "잘가",
+                'searchOption': 30
                 }
         r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
         for i in range(10):
