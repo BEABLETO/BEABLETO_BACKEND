@@ -256,6 +256,7 @@ class GetPathsView(APIView):
                 sub_path['bus_line'] = None
                 sub_path['bus_area'] = None
                 sub_path['bus_height'] = None
+                sub_path['bus_poly'] = None
 
                 # Train 필드
                 sub_path['train_start_x'] = None
@@ -263,6 +264,7 @@ class GetPathsView(APIView):
                 sub_path['train_end_x'] = None
                 sub_path['train_end_y'] = None
                 sub_path['train_line'] = None
+                sub_path['train_poly'] = None
 
                 if str(di[path_index]['legs'][0]['steps'][sub_google_path]['travel_mode']) == "TRANSIT":
                     if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
@@ -272,12 +274,14 @@ class GetPathsView(APIView):
                         sub_path['train_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
                         sub_path['train_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
                         sub_path['train_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
+                        sub_path['train_poly'] = di[path_index]['legs'][0]['steps'][sub_google_path]['polyline']['points']
                     elif "버스" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] and "고속버스" not in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
                         sub_path['type'] = "bus"
                         sub_path['bus_start_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']
                         sub_path['bus_start_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']
                         sub_path['bus_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
                         sub_path['bus_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
+                        sub_path['bus_poly'] = di[path_index]['legs'][0]['steps'][sub_google_path]['polyline']['points']
                         if 'short_name' in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']:
                             sub_path['bus_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
                         else:
