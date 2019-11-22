@@ -675,6 +675,7 @@ class GetInfoByNameView(APIView):
         marker_set = set()
         for obj in info:
             obj_dict = obj.as_dict()
+            add = []
             if obj_dict['location_name'] in rq_data['name'] or rq_data['name'] in obj_dict['location_name']:
                 obj_cord = (obj_dict['x_axis'], obj_dict['y_axis'])
                 if obj_cord in marker_set:
@@ -682,6 +683,7 @@ class GetInfoByNameView(APIView):
                     marker_index = cord_dict[key]
                     marker_list[marker_index].updataValue(obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'])
                 else:
+                    add.append(obj_dict['location_address'])
                     marker_set.add(obj_cord)
                     key = str(obj_cord[0]) + " " + str(obj_cord[1])
                     cord_dict[key] = index
@@ -690,10 +692,14 @@ class GetInfoByNameView(APIView):
                     marker_list.append(newMarker)
 
         ret_list = []
+        m_index = 0
         for m in marker_list:
             # j = json.dumps(d)
             # j = j[1:-1]
-            ret_list.append(m.getAsDict())
+            temp_m = m.getAsDict()
+            temp_m['address'] = bracket_clear(add[m_index])
+            ret_list.append(temp_m)
+            m_index += 1
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)
