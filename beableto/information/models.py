@@ -104,11 +104,12 @@ class Record(models.Model):
         }
 
 
-class SeoulElevator(models.Model):
+class Elevator(models.Model):
     line = models.IntegerField()
-    station = models.CharField(max_length=300)
+    station = models.CharField(max_length=100)
     x_axis = models.FloatField()
     y_axis = models.FloatField()
+    description = models.CharField(max_length=100)
 
     def as_dict(self):
         return {
@@ -116,4 +117,5 @@ class SeoulElevator(models.Model):
             'y_axis': self.y_axis,
             'station': self.station,
             'line': self.line,
+            'description': self.description,
         }

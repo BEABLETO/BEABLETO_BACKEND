@@ -17,4 +17,5 @@ urlpatterns = [
     path('getpose/', views.GetPositionsView.as_view(), name='GPV'),
     path('getfragment/', views.GetFragmentsView.as_view(), name='GFV'),
     path('getlocation/', views.GetInfoByNameView.as_view()),
+    path('saveelevator/', views.ElevatorSaveView.as_view())
 ]

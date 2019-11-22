@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer, CurPoseSerializer
-from information.models import Location, Bus, Fragment, Road, Record
+from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer, CurPoseSerializer, ElevatorSerializer
+from .models import Location, Bus, Fragment, Road, Record, Elevator
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
@@ -224,19 +224,16 @@ class GetPathsView(APIView):
             f.close
         gmaps = googlemaps.Client(key=gmap_api_key)
         # dt = datetime.datetime.now()
-        d = datetime.date(2019, 11, 10)
-        t = datetime.time(13, 23, 38)
+        d = datetime.date(2019, 12, 2)
+        t = datetime.time(2, 23, 38)
         dt = datetime.datetime.combine(d, t)
         di = gmaps.directions((str(rq_data['start_x_axis']), str(rq_data['start_y_axis'])), (str(rq_data['end_x_axis']), str(rq_data['end_y_axis'])), mode="transit", departure_time=dt, alternatives=True, language="ko")
-        print(di)
         paths = {}
         path_list = []
-        path_index = 0
-        for google_path in di:
-            path_index += 1
+        for path_index in range(0, len(di)):
             path = {}
             sub_path_list = []
-            for sub_google_path in google_path['legs'][0]['steps']:
+            for sub_google_path in range(len(di[path_index]['legs'][0]['steps'])):
                 sub_path = {}
 
                 # Front의 요청에 의한 포멧팅
@@ -248,6 +245,7 @@ class GetPathsView(APIView):
                 sub_path['walk_end_x'] = None
                 sub_path['walk_end_y'] = None
                 sub_path['walk_seq'] = None
+                sub_path['walk_sub'] = None
 
                 # Bus 필드
                 sub_path['bus_start_x'] = None
@@ -265,25 +263,25 @@ class GetPathsView(APIView):
                 sub_path['train_end_y'] = None
                 sub_path['train_line'] = None
 
-                if str(sub_google_path['travel_mode']) == "TRANSIT":
-                    if "지하철" in sub_google_path['transit_details']['line']['name'] or "전철" in sub_google_path['transit_details']['line']['name']:
+                if str(di[path_index]['legs'][0]['steps'][sub_google_path]['travel_mode']) == "TRANSIT":
+                    if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
                         sub_path['type'] = "train"
-                        sub_path['train_start_x'] = sub_google_path['start_location']['lat']
-                        sub_path['train_start_y'] = sub_google_path['start_location']['lng']
-                        sub_path['train_end_x'] = sub_google_path['end_location']['lat']
-                        sub_path['train_end_y'] = sub_google_path['end_location']['lng']
-                        sub_path['train_line'] = sub_google_path['transit_details']['line']['short_name']
-                    elif "버스" in sub_google_path['transit_details']['line']['name'] and "고속버스" not in sub_google_path['transit_details']['line']['name']:
+                        sub_path['train_start_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']
+                        sub_path['train_start_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']
+                        sub_path['train_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
+                        sub_path['train_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
+                        sub_path['train_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
+                    elif "버스" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] and "고속버스" not in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
                         sub_path['type'] = "bus"
-                        sub_path['bus_start_x'] = sub_google_path['start_location']['lat']
-                        sub_path['bus_start_y'] = sub_google_path['start_location']['lng']
-                        sub_path['bus_end_x'] = sub_google_path['end_location']['lat']
-                        sub_path['bus_end_y'] = sub_google_path['end_location']['lng']
-                        if 'short_name' in sub_google_path['transit_details']['line']:
-                            sub_path['bus_line'] = sub_google_path['transit_details']['line']['short_name']
+                        sub_path['bus_start_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']
+                        sub_path['bus_start_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']
+                        sub_path['bus_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
+                        sub_path['bus_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
+                        if 'short_name' in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']:
+                            sub_path['bus_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
                         else:
-                            sub_path['bus_line'] = sub_google_path['transit_details']['line']['name']
-                        sub_path['bus_area'] = sub_google_path['transit_details']['line']['name'][:2]
+                            sub_path['bus_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']
+                        sub_path['bus_area'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'][:2]
 
                         info = Bus.objects.filter(area=sub_path['bus_area'], line=sub_path['bus_line'])
                         height = [0] * 3
@@ -301,10 +299,10 @@ class GetPathsView(APIView):
                         continue
                 else:
                     sub_path['type'] = "walk"
-                    sub_path['walk_start_x'] = sub_google_path['start_location']['lat']
-                    sub_path['walk_start_y'] = sub_google_path['start_location']['lng']
-                    sub_path['walk_end_x'] = sub_google_path['end_location']['lat']
-                    sub_path['walk_end_y'] = sub_google_path['end_location']['lng']
+                    sub_path['walk_start_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']
+                    sub_path['walk_start_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']
+                    sub_path['walk_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
+                    sub_path['walk_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
                     sub_path['walk_seq'] = None
 
                     headers = {'Accept': "application/json",
@@ -313,13 +311,29 @@ class GetPathsView(APIView):
                                'Accept-Language': "ko",
                                }
                     # 우리 (x, y)와 T-MAP(x, y) 순서 다름
-                    body = {'startX': str(sub_google_path['start_location']['lng']),
-                            'startY': str(sub_google_path['start_location']['lat']),
-                            'endX': str(sub_google_path['end_location']['lng']),
-                            'endY': str(sub_google_path['end_location']['lat']),
+                    body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
+                            'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
+                            'endX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']),
+                            'endY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']),
                             'startName': "안뇽",
                             'endName': "잘가",
                             }
+                    if sub_google_path < len(di[path_index]['legs'][0]['steps']) - 1:
+                        if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name']:
+                            if "서울" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name']:
+                                elevator = Elevator.objects.filter()
+                                for obj in elevator:
+                                    ele_dict = obj.as_dict()
+                                    if ele_dict['name'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
+                                        body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
+                                                'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
+                                                'endX': str(sub_path['y_axis']),
+                                                'endY': str(sub_path['x_axis']),
+                                                'startName': "안뇽",
+                                                'endName': "잘가",
+                                                }
+                                        sub_path['walk_sub'] = ele_dict['description']
+
                     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
                     for i in range(10):
@@ -328,7 +342,7 @@ class GetPathsView(APIView):
                             r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
                         else:
                             break
-                    road_seq = [[sub_google_path['start_location']['lat'], sub_google_path['start_location']['lng']]]
+                    road_seq = [[di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat'], di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']]]
                     for element in r.json()['features']:
                         if element['geometry']['type'] == 'LineString':
                             # print(element['geometry']['coordinates'])
@@ -336,7 +350,7 @@ class GetPathsView(APIView):
                                 road_point = [point[1], point[0]] # 좌표계 변환
                                 if road_point not in road_seq:
                                     road_seq.append(road_point)
-                    road_seq.append([sub_google_path['end_location']['lat'], sub_google_path['end_location']['lng']])
+                    road_seq.append([di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat'], di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']])
                     roads = []
                     walk_seq = []
                     for i in range(len(road_seq) - 1):
@@ -394,7 +408,6 @@ class GetPathsView(APIView):
             else:
                 break
         if str(r) == "<Response [200]>":
-            path_index += 1
             path = {}
             sub_path_list = []
             sub_path = {}
@@ -417,12 +430,12 @@ class GetPathsView(APIView):
 
             for road in roads:
                 road_info = {
-                    'start_x': road[0][0],
-                    'start_y': road[0][1],
-                    'end_x': road[1][0],
-                    'end_y': road[1][1],
+                    'start_x': float(road[0][0]),
+                    'start_y': float(road[0][1]),
+                    'end_x': float(road[1][0]),
+                    'end_y': float(road[1][1]),
                 }
-                avg_point = [(road[0][0] + road[1][0]) / 2, (road[0][1] + road[1][1]) / 2]
+                avg_point = [(float(road[0][0]) + float(road[1][0])) / 2, (float(road[0][1]) + float(road[1][1])) / 2]
                 k = 0.0002  # 도로 폭 상수 (2k)
                 walk_vgis = Fragment.objects.filter(middle_x__range=(avg_point[0] - k * 10, avg_point[0] + k * 10),
                                                     middle_y__range=(avg_point[1] - k * 10, avg_point[1] + k * 10))
@@ -470,7 +483,6 @@ class GetPathsView(APIView):
             sub_path_list.append(sub_path)
             path['path'] = sub_path_list
             path_list.append(path)
-        print(path_index)
         paths['paths'] = path_list
         return JsonResponse(paths)
 
@@ -614,6 +626,7 @@ class GetFragmentsView(APIView):
 
     def post(self, request):
         rq_data = dict(request.data)
+        print(rq_data)
 
         info = Fragment.objects.filter(Q(start_x__range=(float(rq_data['lsx']), float(rq_data['rnx'])), start_y__range=(float(rq_data['lsy']), float(rq_data['rny']))) | Q(end_x__range=(float(rq_data['lsx']), float(rq_data['rnx'])), end_y__range=(float(rq_data['lsy']), float(rq_data['rny']))))
 
@@ -679,3 +692,18 @@ class GetInfoByNameView(APIView):
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)
+
+
+class ElevatorSaveView(generics.ListCreateAPIView):
+    serializer_class = ElevatorSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        rq_data = dict(request.data)
+
+        serializer = self.get_serializer(data=rq_data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)

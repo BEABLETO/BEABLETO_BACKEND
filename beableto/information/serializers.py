@@ -1,4 +1,4 @@
-from information.models import Location, Bus, Road, Fragment, Record
+from information.models import Location, Bus, Road, Fragment, Record, Elevator
 from rest_framework import serializers
 
 
@@ -30,3 +30,9 @@ class CurPoseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Record
         fields = ('user', 'x', 'y', 'time')
+
+
+class ElevatorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Elevator
+        fields = ('line', 'station', 'x_axis', 'y_axis', 'description')
