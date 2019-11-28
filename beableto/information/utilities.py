@@ -1,6 +1,12 @@
 from math import sqrt
 
 
+def spacebar_clear(string):
+    if string[0] == ' ':
+        return string[1:]
+    return string
+
+
 def bracket_clear(string):
     if string.startswith('\"'):
         string = string[1:]
@@ -99,13 +105,13 @@ class FragmentClass:
     start_y = 0.0
     end_x = 0.0
     end_y = 0.0
-    slope = [0] * 3
 
     def __init__(self, start_x, start_y, end_x, end_y, slope):
         self.start_x = start_x
         self.start_y = start_y
         self.end_x = end_x
         self.end_y = end_y
+        self.slope = [0] * 3
         self.slope[slope] = 1
 
     def updateValue(self, slope):
@@ -200,9 +206,32 @@ def check_area(road, vgi_roads, k):
         return 3
 
 
+class UserRankClass:
+    id = -1
+    point = 0
+    email = ""
+
+    def __init__(self, id, e):
+        self.id = id
+        self.email = e
+
+    def add_point(self, p):
+        self.point += p
+
+    def get_point(self):
+        return self.point
+
+    def as_dict(self):
+        return {
+            'email': self.email,
+            'point': self.point
+        }
+
+
 # 테스트
-vgi_roads = [[[2, 0.5, 2], [3, 2, 2]], [[7, 4, 3], [9, 5, 3]], [[1, 0.5, 1], [3, 2, 1]], [[0.4, 0.7, 2], [0.4, 0.8, 2]]]
-road = [[0, 0], [5, 0]]
-check_area(road, vgi_roads, 1)
+if __name__ == '__main__':
+    vgi_roads = [[[2, 0.5, 2], [3, 2, 2]], [[7, 4, 3], [9, 5, 3]], [[1, 0.5, 1], [3, 2, 1]], [[0.4, 0.7, 2], [0.4, 0.8, 2]]]
+    road = [[0, 0], [5, 0]]
+    check_area(road, vgi_roads, 1)
 
 

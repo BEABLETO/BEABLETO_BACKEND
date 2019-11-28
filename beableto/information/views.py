@@ -1,18 +1,21 @@
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
-from information.serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer, CurPoseSerializer, ElevatorSerializer
-from .models import Location, Bus, Fragment, Road, Record, Elevator
+from .serializers import LocationSerializer, BusSerializer, RoadSerializer, FragmentSerializer, CurPoseSerializer, ElevatorSerializer, HelpSerializer
+from .models import Location, Bus, Fragment, Road, Record, Elevator, Help
+from accounts.models import User
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse, JsonResponse
 import googlemaps
-from .utilities import bracket_clear, arg_max, check_area
-from .utilities import MarkerClass, FragmentClass
+from .utilities import bracket_clear, arg_max, check_area, spacebar_clear
+from .utilities import MarkerClass, FragmentClass, UserRankClass
 import json
 import requests
-import datetime
+import datetime, time
 from django.db.models import Q
+from math import sqrt
+import operator
 
 
 class LocationSaveView(generics.ListCreateAPIView):
@@ -215,13 +218,14 @@ class GetPathsView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        start = time.time()
         rq_data = dict(request.data)
         with open('tmap.txt') as f:
             tmap_api_key = f.readline()
-            f.close
+            f.close()
         with open('googlemaps.txt') as f:
             gmap_api_key = f.readline()
-            f.close
+            f.close()
         gmaps = googlemaps.Client(key=gmap_api_key)
         # dt = datetime.datetime.now()
         d = datetime.date(2019, 12, 2)
@@ -239,6 +243,10 @@ class GetPathsView(APIView):
 
                 # Front의 요청에 의한 포멧팅
                 sub_path['type'] = None
+                sub_path['time'] = None
+                sub_path['color'] = None
+                sub_path['departure'] = None
+                sub_path['arrival'] = None
 
                 # Walk 필드
                 sub_path['walk_start_x'] = None
@@ -265,6 +273,7 @@ class GetPathsView(APIView):
                 sub_path['train_end_y'] = None
                 sub_path['train_line'] = None
                 sub_path['train_poly'] = None
+                sub_path['time'] = di[path_index]['legs'][0]['steps'][sub_google_path]['duration']
 
                 if str(di[path_index]['legs'][0]['steps'][sub_google_path]['travel_mode']) == "TRANSIT":
                     if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
@@ -275,6 +284,9 @@ class GetPathsView(APIView):
                         sub_path['train_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
                         sub_path['train_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
                         sub_path['train_poly'] = di[path_index]['legs'][0]['steps'][sub_google_path]['polyline']['points']
+                        sub_path['color'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['color']
+                        sub_path['departure'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['departure_stop']['name']
+                        sub_path['arrival'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['arrival_stop']['name']
                     elif "버스" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] and "고속버스" not in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
                         sub_path['type'] = "bus"
                         sub_path['bus_start_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']
@@ -282,6 +294,9 @@ class GetPathsView(APIView):
                         sub_path['bus_end_x'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat']
                         sub_path['bus_end_y'] = di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']
                         sub_path['bus_poly'] = di[path_index]['legs'][0]['steps'][sub_google_path]['polyline']['points']
+                        sub_path['color'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['color']
+                        sub_path['departure'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['departure_stop']['name']
+                        sub_path['arrival'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['arrival_stop']['name']
                         if 'short_name' in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']:
                             sub_path['bus_line'] = di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['short_name']
                         else:
@@ -324,6 +339,7 @@ class GetPathsView(APIView):
                             'endName': "잘가",
                             'searchOption': 30
                             }
+                    add = True
                     if sub_google_path < len(di[path_index]['legs'][0]['steps']) - 1:
                         if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name']:
                             if "서울" in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['line']['name']:
@@ -331,7 +347,7 @@ class GetPathsView(APIView):
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
                                     if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
-                                        print("aasd")
+                                        add = False
                                         body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
                                                 'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
                                                 'endX': str(ele_dict['y_axis']),
@@ -344,7 +360,7 @@ class GetPathsView(APIView):
 
                     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
-                    for i in range(10):
+                    for i in range(4):
                         if str(r) != "<Response [200]>":
                             print(r)
                             r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
@@ -358,7 +374,8 @@ class GetPathsView(APIView):
                                 road_point = [point[1], point[0]] # 좌표계 변환
                                 if road_point not in road_seq:
                                     road_seq.append(road_point)
-                    road_seq.append([di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat'], di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']])
+                    if add:
+                        road_seq.append([di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lat'], di[path_index]['legs'][0]['steps'][sub_google_path]['end_location']['lng']])
                     roads = []
                     walk_seq = []
                     for i in range(len(road_seq) - 1):
@@ -410,8 +427,8 @@ class GetPathsView(APIView):
                 'searchOption': 30
                 }
         r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
-        for i in range(10):
-            if str(r) != "<Response [200]>" and str(r) != "<Response [204]>":
+        for i in range(4):
+            if str(r) != "<Response [200]>" and str(r) != "<Response [204]>" and str(r) != "<Response [500]>":
                 print(r)
                 r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
             else:
@@ -421,7 +438,7 @@ class GetPathsView(APIView):
             sub_path_list = []
             sub_path = {}
 
-            road_seq = [[rq_data['start_x_axis'], rq_data['start_y_axis']]]
+            road_seq = [[float(rq_data['start_x_axis']), float(rq_data['start_y_axis'])]]
             for element in r.json()['features']:
                 if element['geometry']['type'] == 'LineString':
                     # print(element['geometry']['coordinates'])
@@ -429,7 +446,7 @@ class GetPathsView(APIView):
                         road_point = [point[1], point[0]]  # 좌표계 변환
                         if road_point not in road_seq:
                             road_seq.append(road_point)
-            road_seq.append([rq_data['end_x_axis'], rq_data['end_y_axis']])
+            road_seq.append([float(rq_data['end_x_axis']), float(rq_data['end_y_axis'])])
 
             roads = []
             walk_seq = []
@@ -466,6 +483,8 @@ class GetPathsView(APIView):
 
             # Front의 요청에 의한 포멧팅
             sub_path['type'] = 'walk'
+            sub_path['time'] = None
+            sub_path['color'] = None
 
             # Walk 필드
             sub_path['walk_start_x'] = rq_data['start_x_axis']
@@ -493,6 +512,8 @@ class GetPathsView(APIView):
             path['path'] = sub_path_list
             path_list.append(path)
         paths['paths'] = path_list
+
+        print("time :", time.time() - start)
         return JsonResponse(paths)
 
 
@@ -680,6 +701,7 @@ class GetInfoByNameView(APIView):
         for obj in info:
             obj_dict = obj.as_dict()
             add = []
+            rq_data['name'] = spacebar_clear(rq_data['name'])
             if obj_dict['location_name'] in rq_data['name'] or rq_data['name'] in obj_dict['location_name']:
                 obj_cord = (obj_dict['x_axis'], obj_dict['y_axis'])
                 if obj_cord in marker_set:
@@ -722,3 +744,77 @@ class ElevatorSaveView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class HelpSaveView(generics.ListCreateAPIView):
+    serializer_class = HelpSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        rq_data = dict(request.data)
+
+        serializer = self.get_serializer(data=rq_data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'message': 'Saved'}, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class GetHelpView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        rq_data = dict(request.data)
+        info = Help.objects.filter()
+
+        min_val = 9999999999
+        min_obj = None
+
+        for obj in info:
+            obj_dict = obj.as_dict()
+            val = sqrt((obj_dict['x_axis'] - rq_data['x']) ** 2 + (obj_dict['y_axis'] - rq_data['y']) ** 2)
+            if val <= min_val:
+                min_val = val
+                min_obj = obj_dict
+
+        return JsonResponse(min_obj)
+
+
+class GetRank(APIView):
+    serializer_class = BusSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        rq_data = dict(request.data)
+
+        user_info = User.objects.filter()
+
+        user_list = []
+        for obj in user_info:
+            obj_dict = obj.as_dict()
+            user_list.append(UserRankClass(obj_dict['id'], obj_dict['email']))
+
+        for usr in user_list:
+            l = Location.objects.filter(user_id=usr.id)
+            usr.add_point(len(l) * 5)
+            b = Bus.objects.filter(user_id=usr.id)
+            usr.add_point(len(b) * 2)
+            r = Road.objects.filter(user_id=usr.id)
+            usr.add_point(len(r) * 10)
+        user_list = sorted(user_list, key=operator.attrgetter('point'), reverse=True)
+        user_dict_list = []
+        rank = 1
+        for usr in user_list:
+            temp = usr.as_dict()
+            temp['rank'] = rank
+            user_dict_list.append(temp)
+            rank += 1
+        ret_dict = {
+            'ranking': user_dict_list[:9]
+        }
+        for i in range(len(user_list)):
+            if user_list[i].id is request.user.pk:
+                ret_dict['my_rank'] = user_dict_list[i]
+
+        return JsonResponse(ret_dict)

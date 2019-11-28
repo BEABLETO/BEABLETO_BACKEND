@@ -119,3 +119,20 @@ class Elevator(models.Model):
             'line': self.line,
             'description': self.description,
         }
+
+
+class Help(models.Model):
+    name = models.CharField(max_length=200)
+    x_axis = models.FloatField()
+    y_axis = models.FloatField()
+    phone = models.CharField(max_length=100)
+    car = models.IntegerField()
+
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'x_axis': self.x_axis,
+            'y_axis': self.y_axis,
+            'phone': self.phone,
+            'car': self.car
+        }

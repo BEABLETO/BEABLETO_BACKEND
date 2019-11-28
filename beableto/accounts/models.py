@@ -56,3 +56,8 @@ class User(AbstractUser, TimeStampedModel, DeleteModel):
         self.username = deleted_name
         self.nickname = deleted_name
 
+    def as_dict(self):
+        return {
+            'email': self.email,
+            'id': self.id,
+        }
