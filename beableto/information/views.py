@@ -219,6 +219,7 @@ class GetPathsView(APIView):
 
     def post(self, request):
         start = time.time()
+        print(request.data)
         rq_data = dict(request.data)
         with open('tmap.txt') as f:
             tmap_api_key = f.readline()
@@ -227,6 +228,7 @@ class GetPathsView(APIView):
             gmap_api_key = f.readline()
             f.close()
         gmaps = googlemaps.Client(key=gmap_api_key)
+        temp = None
         # dt = datetime.datetime.now()
         d = datetime.date(2019, 12, 2)
         t = datetime.time(14, 23, 38)
@@ -254,7 +256,7 @@ class GetPathsView(APIView):
                 sub_path['walk_end_x'] = None
                 sub_path['walk_end_y'] = None
                 sub_path['walk_seq'] = None
-                sub_path['walk_sub'] = None
+                sub_path['walk_sub'] = temp
 
                 # Bus 필드
                 sub_path['bus_start_x'] = None
@@ -346,7 +348,8 @@ class GetPathsView(APIView):
                                 elevator = Elevator.objects.filter()
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
-                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
+                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] or di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] in ele_dict['station']:
+                                        print(ele_dict['description'])
                                         add = False
                                         body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
                                                 'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
@@ -356,7 +359,10 @@ class GetPathsView(APIView):
                                                 'endName': "잘가",
                                                 'searchOption': 30
                                                 }
-                                        sub_path['walk_sub'] = ele_dict['description']
+                                        # sub_path['walk_sub'] = ele_dict['description']
+                                        temp = ele_dict['description']
+                    if add:
+                        temp = None
 
                     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
