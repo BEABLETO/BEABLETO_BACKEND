@@ -185,14 +185,16 @@ class LocationGetAllMarkersVIew(APIView):
                 key = str(obj_cord[0]) + " " + str(obj_cord[1])
                 cord_dict[key] = index
                 index += 1
-                newMarker = MarkerClass(obj_cord[0], obj_cord[1], obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'], obj_dict['location_name'])
+                newMarker = MarkerClass(obj_cord[0], obj_cord[1], obj_dict['slope'], obj_dict['auto_door'], obj_dict['elevator'], obj_dict['toilet'], obj_dict['location_name'], obj_dict['location_address'])
                 marker_list.append(newMarker)
 
         ret_list = []
         for m in marker_list:
             # j = json.dumps(d)
             # j = j[1:-1]
-            ret_list.append(m.getAsDict())
+            t = m.getAsDict()
+            t['location_address'] = m.location_address
+            ret_list.append(t)
         markers = dict()
         markers['markers'] = ret_list
         return JsonResponse(markers)

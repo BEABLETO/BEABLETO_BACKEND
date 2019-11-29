@@ -26,8 +26,9 @@ class MarkerClass:
     toilet = 0
 
     # Functions
-    def __init__(self, x, y, slope, auto_door, elevator, toilet, name):
+    def __init__(self, x, y, slope, auto_door, elevator, toilet, name, addr=None):
         self.location_name = ""
+        self.location_address = bracket_clear(addr)
         self.x = x
         self.y = y
         self.slope_sum += slope
