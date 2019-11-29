@@ -193,7 +193,7 @@ class LocationGetAllMarkersVIew(APIView):
             # j = json.dumps(d)
             # j = j[1:-1]
             t = m.getAsDict()
-            t['location_address'] = m.location_address
+            t['address'] = m.location_address
             ret_list.append(t)
         markers = dict()
         markers['markers'] = ret_list
@@ -239,6 +239,7 @@ class GetPathsView(APIView):
         print(rq_data)
         paths = {}
         path_list = []
+        prev = False
         for path_index in range(0, len(di)):
             path = {}
             sub_path_list = []
@@ -278,6 +279,7 @@ class GetPathsView(APIView):
                 sub_path['train_line'] = None
                 sub_path['train_poly'] = None
                 sub_path['time'] = di[path_index]['legs'][0]['steps'][sub_google_path]['duration']
+
 
                 if str(di[path_index]['legs'][0]['steps'][sub_google_path]['travel_mode']) == "TRANSIT":
                     if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path]['transit_details']['line']['name']:
@@ -351,7 +353,6 @@ class GetPathsView(APIView):
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
                                     if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] or di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] in ele_dict['station']:
-                                        print(ele_dict['description'])
                                         add = False
                                         body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
                                                 'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
@@ -363,6 +364,16 @@ class GetPathsView(APIView):
                                                 }
                                         # sub_path['walk_sub'] = ele_dict['description']
                                         temp = ele_dict['description']
+                    if sub_google_path > 0:
+                        if "지하철" in di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['line']['name'] or "전철" in di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['line']['name']:
+                            if "서울" in di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['line']['name']:
+                                elevator = Elevator.objects.filter()
+                                for obj in elevator:
+                                    ele_dict = obj.as_dict()
+                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['arrival_stop']['name'] or di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['arrival_stop']['name'] in ele_dict['station']:
+                                        body['startX'] = str(ele_dict['y_axis'])
+                                        body['startY'] = str(ele_dict['x_axis'])
+                                        print("a")
                     if add:
                         temp = None
 
@@ -515,6 +526,7 @@ class GetPathsView(APIView):
             sub_path['train_end_x'] = None
             sub_path['train_end_y'] = None
             sub_path['train_line'] = None
+
 
             sub_path_list.append(sub_path)
             path['path'] = sub_path_list
