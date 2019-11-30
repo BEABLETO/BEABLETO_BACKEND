@@ -8,6 +8,8 @@ def spacebar_clear(string):
 
 
 def bracket_clear(string):
+    if string is None:
+        return string
     if string.startswith('\"'):
         string = string[1:]
     if string.endswith('\"'):
