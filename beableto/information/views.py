@@ -352,7 +352,7 @@ class GetPathsView(APIView):
                                 elevator = Elevator.objects.filter()
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
-                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] or di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name'] in ele_dict['station']:
+                                    if ele_dict['station'] == di[path_index]['legs'][0]['steps'][sub_google_path + 1]['transit_details']['departure_stop']['name']:
                                         add = False
                                         body = {'startX': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']),
                                                 'startY': str(di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat']),
@@ -370,7 +370,7 @@ class GetPathsView(APIView):
                                 elevator = Elevator.objects.filter()
                                 for obj in elevator:
                                     ele_dict = obj.as_dict()
-                                    if ele_dict['station'] in di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['arrival_stop']['name'] or di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['arrival_stop']['name'] in ele_dict['station']:
+                                    if ele_dict['station'] == di[path_index]['legs'][0]['steps'][sub_google_path - 1]['transit_details']['arrival_stop']['name']:
                                         body['startX'] = str(ele_dict['y_axis'])
                                         body['startY'] = str(ele_dict['x_axis'])
                                         print("a")
@@ -380,11 +380,15 @@ class GetPathsView(APIView):
                     r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
 
                     for i in range(4):
-                        if str(r) != "<Response [200]>":
-                            print(r)
+                        if str(r) == "<Response [500]>":
+                            break
+                        elif str(r) != "<Response [200]>":
                             r = requests.post('https://apis.openapi.sk.com/tmap/routes/pedestrian', headers=headers, data=json.dumps(body))
                         else:
                             break
+                    if str(r) != "<Response [200]>":
+                        print("시발")
+                        continue
                     road_seq = [[di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lat'], di[path_index]['legs'][0]['steps'][sub_google_path]['start_location']['lng']]]
                     for element in r.json()['features']:
                         if element['geometry']['type'] == 'LineString':
@@ -716,11 +720,11 @@ class GetInfoByNameView(APIView):
 
         index = 0
         marker_list = []
+        add = []
         cord_dict = {}
         marker_set = set()
         for obj in info:
             obj_dict = obj.as_dict()
-            add = []
             rq_data['name'] = spacebar_clear(rq_data['name'])
             if obj_dict['location_name'] in rq_data['name'] or rq_data['name'] in obj_dict['location_name']:
                 obj_cord = (obj_dict['x_axis'], obj_dict['y_axis'])
@@ -739,6 +743,7 @@ class GetInfoByNameView(APIView):
 
         ret_list = []
         m_index = 0
+        print(len(marker_list), len(add))
         for m in marker_list:
             # j = json.dumps(d)
             # j = j[1:-1]
@@ -748,6 +753,7 @@ class GetInfoByNameView(APIView):
             m_index += 1
         markers = dict()
         markers['markers'] = ret_list
+        print(markers)
         return JsonResponse(markers)
 
 
