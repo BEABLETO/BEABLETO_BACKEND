@@ -753,7 +753,6 @@ class GetInfoByNameView(APIView):
             m_index += 1
         markers = dict()
         markers['markers'] = ret_list
-        print(markers)
         return JsonResponse(markers)
 
 
