@@ -571,6 +571,7 @@ class RoadSaveView(generics.ListCreateAPIView):
         obj = Road.objects.create(
             road=road_str,
             slope=rq_data['slope'],
+            user_id=request.user.pk
         )
 
         # Saving Fragments
@@ -822,11 +823,11 @@ class GetRank(APIView):
 
         for usr in user_list:
             l = Location.objects.filter(user_id=usr.id)
-            usr.add_point(len(l) * 5)
+            usr.add_point(len(l) * 3)
             b = Bus.objects.filter(user_id=usr.id)
             usr.add_point(len(b) * 2)
             r = Road.objects.filter(user_id=usr.id)
-            usr.add_point(len(r) * 10)
+            usr.add_point(len(r) * 5)
         user_list = sorted(user_list, key=operator.attrgetter('point'), reverse=True)
         user_dict_list = []
         rank = 1
